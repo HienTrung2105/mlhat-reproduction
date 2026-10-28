@@ -1,0 +1,37 @@
+# Python / virtual environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Credentials and experiment tracking
+.env
+.env.*
+!.env.example
+wandb/
+*.key
+*.pem
+
+# Downloaded data / heavyweight outputs
+/data/raw/
+/data/processed/
+/checkpoints/
+/artifacts/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*.local.json
