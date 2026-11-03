@@ -1,181 +1,51 @@
-# AGENTS.md — MLHAT Paper Reproduction (Introduction to Machine Learning)
+# AGENTS.md — MLHAT reproduction
 
-> **Purpose:** Persistent project context and working rules for AI coding agents (Codex, Copilot, etc.). Place this file at the **root of the team's GitHub repository**. Read it before planning, generating files, coding, or editing documentation.
->
-> **Current status (as of 2026-10-28):** Team of **3 students** has **selected MLHAT as its intended paper**. Registration acceptance, member-to-role mapping, exact deadlines, datasets, and reproduction scope are **not yet confirmed here**. **Do not claim these are confirmed.** This file is a project brief, not proof that code or experiments already exist.
+Quy tắc làm việc cho coding agent trong repo này. Đọc [README.md](README.md) và cây file thực tế trước khi sửa. Giao tiếp với nhóm bằng tiếng Việt.
 
-## 1. Project identity and research question
+## Bối cảnh và nguồn ưu tiên
 
-- **Course:** Introduction to Machine Learning (Nhập môn Máy học).
-- **Project:** Study, independently reimplement, reproduce and critically assess a recent published ML research paper.
-- **Paper:** *Hoeffding adaptive trees for multi-label classification on data streams* — Aurora Esteban, Alberto Cano, Amelia Zafra, Sebastián Ventura (2024), *Knowledge-Based Systems*.
-- **Paper:** https://arxiv.org/abs/2410.20242
-- **DOI:** https://doi.org/10.1016/j.knosys.2024.112561
-- **Authors' reference repository:** https://github.com/aestebant/mlhat
-- **Method:** **MLHAT** = Multi-Label Hoeffding Adaptive Tree.
-- **Problem:** Online/streaming multi-label classification under potentially changing data concepts. Study incremental tree growth, relationships among labels, adaptive leaf prediction, and drift adaptation.
-- **Scientific objective:** Understand what is novel, reimplement the core proposed contribution from paper descriptions (not by copying the authors' code), run a meaningful subset of the paper's experiments, quantify deviations, and explain them.
+- Nhóm 3 sinh viên môn Nhập môn Máy học đã chọn bài báo *Hoeffding adaptive trees for multi-label classification on data streams* (Esteban et al., 2024): [paper](https://arxiv.org/abs/2410.20242), [DOI](https://doi.org/10.1016/j.knosys.2024.112561).
+- Mục tiêu: hiểu và tự triển khai đóng góp MLHAT, tái tạo một phần thí nghiệm, định lượng và giải thích sai lệch so với paper.
+- **Trạng thái hiện tại:** repo có hạ tầng đánh giá và baseline demo synthetic; chưa có MLHAT hoàn chỉnh hay run tái tạo. Paper được duyệt, mã nhóm, deadline, vai trò thực tế, dataset và scope chưa được xác nhận trong repo. Xem [docs/decisions.md](docs/decisions.md).
+- Thứ tự nguồn: **hướng dẫn Moodle/giảng viên mới nhất → paper → quyết định đã ghi của nhóm → [repo tác giả](https://github.com/aestebant/mlhat) để kiểm chứng**. Báo lại nếu nguồn mâu thuẫn; đừng tự coi kế hoạch đề xuất là quyết định chính thức.
 
-### Sources of truth (priority)
-1. **Actual course/Moodle instructions, grading rubric and deadlines** supplied by the students.
-2. **The paper** for method details, mathematical claims, baselines, datasets and protocols.
-3. Team decisions recorded in this repo (`README.md`, `docs/decisions.md`, configs).
-4. Authors' repository **only for independent verification, running comparisons and debugging reference outputs; not as code to copy into the team's implementation**.
+## Hai bài nộp Midterm
 
-When this file conflicts with updated teacher instructions, flag the conflict and update the plan; never quietly assume this document overrules the teacher.
+1. **URL repo GitHub công khai.** Repo tiếp tục phát triển sau khi nộp link; commit phải thể hiện công việc thật của nhóm.
+2. **Một file `ID.pptx`** với mã nhóm đã đăng ký: 20–40 slide tính cả appendix, dưới 20 MB, speaker notes trên **mọi** slide (tối đa 500 từ/slide). Deck phải gồm đọc hiểu paper **và** tái tạo thực nghiệm. Dùng hình/bảng nhóm tự tạo; trích dẫn IEEE ở cuối từng slide sử dụng nguồn, không làm slide tài liệu tham khảo riêng. Đối chiếu số liệu thực với paper và giải thích sai lệch; mỗi số liệu/hình thực nghiệm phải truy về code, config và W&B run công khai.
 
-## 2. Scope of the FIRST deliverables (Midterm)
+Final poster là giai đoạn sau. Không tuyên bố đã nộp, đã chạy hay đã tái tạo khi chưa có bằng chứng.
 
-**There are TWO SEPARATE Moodle submissions now; final poster is later.**
+## Liêm chính và tái lập
 
-### Deliverable 1 — Public GitHub repository URL
-- One team representative submits **one publicly accessible repository link**.
-- Repository should progressively contain the team's actual implementation, reusable experiment scripts, setup instructions, documentation, and authentic Git history.
-- Submission is **an informational deadline, not the last permitted commit**: development can continue after the link submission until the final poster deadline.
-- Never pretend a freshly scaffolded, empty repo is a completed reproduction.
+- **Tự triển khai lõi MLHAT từ mô tả, công thức của paper.** Không sao chép, port, dịch hay viết lại code lõi của tác giả hoặc nhóm khác. Repo tác giả chỉ để đọc/chạy/đối chiếu độc lập; ghi rõ mọi phép so sánh đó.
+- Có thể dùng thư viện thông dụng và hạ tầng không mới, nhưng ghi nguồn/phần tái sử dụng trong README. Course yêu cầu Python >=3.9; cấu hình repo hiện yêu cầu >=3.10. Không phụ thuộc vào package có sẵn MLHAT.
+- Ghi seed, phiên bản thư viện, môi trường/phần cứng cần thiết, hyperparameter và giao thức đánh giá. Dùng docstring cho hàm quan trọng, nêu mục đích, tham số, giá trị trả về.
+- Tải dataset thí nghiệm **bằng code từ Hugging Face hoặc Kaggle khi chạy**; ghi nguồn, phiên bản, schema nhãn, thứ tự stream và tiền xử lý. Không yêu cầu chép dataset thủ công.
+- Mỗi run báo cáo phải có W&B **public** ghi config và metric; README ánh xạ `experiment → script/config → run URL → kết quả một dòng`. Không bịa số đo, hình, citation hay run.
+- Không commit secret, API key, dataset lớn, cache, checkpoint hoặc log W&B local.
 
-### Deliverable 2 — Midterm PPTX (45% of course project grade)
-- **Single file:** `ID.pptx`, where `ID` is the team's registered numeric ID (still unspecified).
-- **20–40 slides in total**, including appendices; **under 20 MB**.
-- Combines **Paper Reading/Understanding + Experimental Reproduction** (not just a summary of the article).
-- **Every slide must have presenter/speaker notes, at most 500 words**, sufficient for examiners to read without oral presentation.
-- Prefer **team-created diagrams, mathematical explanations, plots and tables** over dense text. Redraw rather than paste paper figures.
-- Cite references **IEEE-style at the bottom of each slide that uses them**; course rules say **no standalone references slide**.
-- Report actual reproduction runs compared side-by-side with paper figures/metrics, with **relative deviations** where quantitative. Explain meaningful differences.
-- Every reported experimental figure/number must trace back to an actual **public W&B run** and the corresponding team code/configuration.
-- **Do not fabricate results, charts, citations, runs or completion claims.**
+## Trước khi viết thí nghiệm
 
-### Later — Final poster (not current priority)
-The final stage covers theoretical criticism, limitations and experiments deliberately designed to investigate those limitations, then a poster/oral poster defense. Keep future extension in mind but **prioritize the two Midterm submissions**.
+- Đọc phần Experiments của paper và điền [docs/experiment-protocol.md](docs/experiment-protocol.md): claim, dataset, baseline, metric chính xác, config, seed/số lần chạy, output và hình/bảng paper cần kiểm chứng.
+- Nhóm phải chốt **Full** hoặc **Core**. Nếu chọn Core, kế hoạch cần ít nhất hai thí nghiệm quan trọng, gồm so sánh trung tâm của paper, và một phân tích bổ sung do nhóm thiết kế. Hiện đây là **phương án**, chưa phải scope được duyệt.
+- Nếu paper yêu cầu online/prequential, dự đoán trước khi học từ mẫu đó. Kiểm tra schema, split, định nghĩa và thang metric trước khi so số liệu; chỉ tính relative deviation cho các giá trị so sánh được.
+- Khi công thức hoặc thứ tự cập nhật chưa rõ, nêu rõ mục/định nghĩa cần xác minh và đề xuất kiểm tra nhỏ; không tự sáng tạo chi tiết khoa học.
 
-## 3. Rules for scientific integrity and reproducibility
+## Phối hợp A/B/C (đề xuất, chưa gán tên)
 
-These are non-negotiable course requirements:
+| Vai trò | Phần chính | Midterm slides đề xuất |
+| --- | --- | --- |
+| A | Tree, node statistics, split, lý thuyết; hỗ trợ phân tích bổ sung | 7–13, 18–20 |
+| B | Leaf prediction, data, metric, W&B, thí nghiệm 1; ghép deck | 1–6, 14–15, 21–22 |
+| C | Drift adaptation, thí nghiệm 2, đối chiếu sai lệch | 16–17, 23–30 |
 
-- **Implement the core novel MLHAT method independently from the paper's description.** Do not copy/paste/port/translate the paper authors' core source code or another team's implementation. Do not disguise copying through renaming or AI rewriting.
-- The reference repository may be **read, run, and compared** strictly for validation. Report any such comparison transparently.
-- Standard libraries and non-novel infrastructure (dataset loaders, standard metrics, general-purpose modules) may be reused **with clear citations/attribution in README**; always distinguish reused infrastructure from original work.
-- Use **Python >= 3.9**. Standard scientific tools include `numpy`, `scipy`, `scikit-learn`, and, if necessary, `torch`, `tensorflow`, or `jax`. Explain non-standard dependencies and their purpose in README; do not secretly depend on a ready-made MLHAT implementation.
-- Record random seeds, library versions, relevant hardware/software details, chosen hyperparameters and prequential/evaluation protocol so runs can be repeated.
-- Every important function must have a docstring covering purpose, parameters and return value.
-- Load all experiment datasets **programmatically** from Hugging Face or Kaggle at run time. Prefer existing public mirrors; if none exists, publish a properly documented dataset to one of those platforms (subject to permission) and fetch it automatically. **Avoid manual data-copy setup.**
-- Maintain **public Weights & Biases (W&B)** tracking for each run: configuration, metrics, plots/artifacts as appropriate. README must map **experiment -> script/notebook -> W&B run URL -> one-line result**.
-- Never commit secrets, W&B API keys, private credentials, huge local datasets, caches, or generated checkpoints by default.
-- Never generate fake measurements or claim that an experiment executed without its actual log/run.
+Cả ba đọc paper, review chéo và hiểu toàn bộ hệ thống. C không ôm hết tích hợp/thí nghiệm; mỗi người làm cả code/nghiên cứu lẫn slide của mình.
 
-## 4. Reproduction strategy
+## Cách agent làm việc
 
-The team must make and document a deliberate choice:
-
-- **Full scope:** Reproduce all main experiments on the same or equivalent datasets.
-- **Core scope (likely practical for a small team, NOT yet officially selected):** Reproduce **at least two of the most important experiments, including the paper's central comparison**, and replace omitted work with a **team-designed complementary analysis** (e.g., sensitivity to an important configuration).
-
-**Before coding full experiments**, inspect the paper's experiment section and produce a protocol table containing: research claim, dataset, baseline, exact metric, configuration, seed/run count, output, and which paper figure/table it tests. Example ideas (MLHT comparisons, drift streams, sensitivity sweeps) are **candidates**, not an approved final protocol.
-
-Use true online/test-then-train evaluation if required by the paper. Validate dataset/label format and metric definitions carefully; do not compare incompatible metric scales or different splits as though they were equivalent.
-
-## 5. Team work allocation — proposed; confirm names later
-
-Each member owns both a **research/code workstream** and the **associated PPTX content**. All three must read the entire paper, review one another's modules, and be able to explain any part during the final defense.
-
-| Person | Primary scientific work | Primary coding work | Midterm slides | Extra ownership |
-|---|---|---|---|---|
-| **A — Core Algorithm & Theory** | Hoeffding Tree/HAT, Hoeffding Bound, node statistics, multi-label split criterion, method derivation, complexity | Incremental tree/node logic, sufficient statistics, split-selection logic; unit tests | **7–13, 18–20** (10 slides) | Validate math and theoretical claims; lead a complementary analysis with B/C help |
-| **B — Multi-label, Data & Slide Lead** | Multi-label classification/prediction at leaves, datasets, prior work, metrics and evaluation | Leaf predictors, auto dataset loading, streaming evaluation, metric calculations and W&B plumbing | **1–6, 14–15, 21–22** (10 slides) | Own Experiment 1 execution with support; integrate PPTX layout/notes/citations |
-| **C — Drift & Experiment Lead** | Concept drift, ADWIN/background branches, experiment reproduction and discrepancy analysis | Drift adaptation, background-tree/branch handling, integration tests and reproduction scripts | **16–17, 23–30** (10 slides) | Own Experiment 2 with support; coordinate baseline comparison/results table |
-
-**Balance rule:** C does **not** do all integration, baselines, data, W&B, results and slides alone. B owns data/metrics/W&B and an experiment; A tests and supports implementation/debugging and an extra analysis. C coordinates the experiment report. Owners request code review from other members.
-
-**Slide breakdown (proposal, adaptable without violating 20–40 rule):**
-- B 1–6: problem, motivations, predecessor methods and limitations.
-- A 7–9: gaps, contributions, notation and problem formulation.
-- A 10–13: overall MLHAT workflow, incremental decision tree and splitting.
-- B 14–15: multi-label leaf prediction and evaluation intuition.
-- C 16–17: drift detectors and adaptive replacement.
-- A 18–20: theoretical claims, complexity and worked explanation.
-- B 21–22: original datasets, metrics, baselines and evaluation protocol.
-- C 23–24: reproduction scope, implementation architecture and configs.
-- C 25–28: **real** results from the two reproduction experiments (with B and A contributing evidence).
-- C 29–30: discrepancy/additional analysis and evidence-based Midterm conclusion.
-
-Each slide owner must submit **editable team-original diagrams/plots, concise slide content, IEEE citation(s) and speaker notes**. B integrates; all three review the completed deck.
-
-## 6. Proposed staged workflow (NOT official deadlines)
-
-1. **Understand:** All read abstract -> introduction -> conclusion -> related work -> experiments -> method; collectively write paper summary and open questions.
-2. **Agree on architecture/protocol:** Confirm module contracts, dataset/metrics/baselines, Core-vs-Full decision, experiment success criteria, Git branching/review conventions.
-3. **Scaffold:** Initialize readable repo, environment setup, README, tests, docs, experiment/config skeleton, W&B integration stub; commit incremental changes.
-4. **Build a baseline end-to-end:** Load a small public dataset automatically; exercise test-then-train loop, metrics and an actual W&B run. Do not mislabel baseline as MLHAT.
-5. **Reimplement and unit-test MLHAT:** A/B/C build independently owned modules, integrate progressively and verify expected behavior on tiny synthetic cases.
-6. **Reproduce:** Run agreed paper comparisons; archive configs, run IDs, output tables/figures and reasons for numerical gaps.
-7. **Create Midterm deck:** 20–40 slides, real evidence, speaker notes, original figures, citations; final mutual review.
-8. **Submit separately:** one public GitHub URL and one correctly named `ID.pptx` on Moodle. Record actual submission deadlines when known.
-
-## 7. Current minimal repository layout
-
-```text
-mlhat-reproduction/
-├── AGENTS.md                 # project context and working rules
-├── README.md                 # current status, setup and next steps
-├── pyproject.toml             # Python package and dependencies
-├── .gitignore
-├── docs/
-│   ├── decisions.md           # unresolved team choices
-│   └── experiment-protocol.md # paper-grounded experiment plan
-├── src/
-│   └── mlhat/
-│       ├── tree.py            # interface stub; MLHAT not implemented
-│       ├── interfaces.py
-│       ├── evaluation.py
-│       ├── data.py
-│       └── __init__.py
-├── experiments/
-│   └── smoke_baseline.py      # synthetic pipeline demonstration
-└── tests/                     # tests for the current infrastructure
-```
-
-Add paper notes, MLHAT modules, reproduction scripts, configs, figures, slides and run evidence when the team has substantive content. The exact names may change after reading the paper; do not create empty files or directories solely for appearance.
-
-## 8. Coding agent behavior rules
-
-When asked to help in this repository:
-
-1. **First inspect the existing file tree and README**. Do not assume a scaffold, implementation, datasets, teammates' commits or successful runs already exist.
-2. **Restate the requested task and its limits**, and propose a short set of steps for substantial changes. Prioritize current Midterm deliverables.
-3. Distinguish clearly among **course requirement**, **paper-proven fact**, **team decision** and **agent suggestion**. Put unresolved choices in `docs/decisions.md` with `TODO` status; don't silently guess deadlines, registered team ID, final scope, metrics or experiment results.
-4. For a repository scaffold request, start with **small usable infrastructure**, README, `.gitignore`, environment, tests and clear task placeholders. **Do NOT generate a supposedly finished MLHAT algorithm from vague recollection**; first reference specific paper sections/equations.
-5. Make small reviewable changes, preserve other members' work, don't overwrite code or force-push without explicit permission. Prefer branches/PRs when working collaboratively.
-6. Write Python with readable names, type hints where helpful, concise docstrings, explicit seeds/configuration and focused tests for new logic.
-7. After code changes, execute the relevant tests and report what passed, failed or was not executable. Do not claim a W&B run or source comparison took place unless actually performed.
-8. For figures/slides, produce original visualizations and traceable citations. Never invent results or fill slide tables with made-up numbers as if measured.
-9. If model behavior/equations are unclear, **state the ambiguity**, identify the paper section that needs verification and suggest a targeted small test; don't invent a scientific definition.
-10. For substantial work, close with: **files changed, commands/tests run, actual result, remaining risks, and next tasks by A/B/C**.
-11. Communicate to the team in **Vietnamese** by default; keep technical identifiers, Python APIs and paper terminology in standard English.
-
-## 9. What a successful Midterm hand-off looks like
-
-- [ ] Registration/paper and team ID confirmed on Moodle.
-- [ ] Public repo and README are accessible; 3 members have identifiable work/history.
-- [ ] Independent MLHAT implementation runs for the agreed scope and has meaningful tests.
-- [ ] Datasets are fetched programmatically; experiment environment/seeds documented.
-- [ ] At least 2 key reproduction experiments including central paper comparison if Core scope; complementary analysis included.
-- [ ] Each result is linked to a public W&B run and an executable script/notebook.
-- [ ] Reproduced vs published metrics shown together; important deviations analyzed.
-- [ ] PPTX is 20–40 slides, <20 MB, correct `ID.pptx` name, with notes and per-slide IEEE references.
-- [ ] Original, team-created figures; each author reviewed their section and the full deck.
-- [ ] GitHub URL and PPTX separately submitted before their actual Moodle deadlines.
-
-## 10. Example prompts to use with the agent
-
-**First session (safe repository initialization):**
-> Read AGENTS.md carefully. Our 3-person group has selected the MLHAT paper and is just starting. Inspect the current repository. Propose the smallest clean public GitHub structure for the Midterm phase. After showing the proposed tree, create README, Python environment setup, .gitignore, documentation templates, and starter tests if authorized. Do not pretend MLHAT or any reproduction experiment is already complete. Explain what A, B, and C should do next.
-
-**Later, to start implementation:**
-> Read AGENTS.md and the paper method section. Help A design the MLHAT node/splitting interfaces, with mathematical assumptions cited by section, unit tests on small synthetic streams, and integration interfaces for B (leaf prediction/evaluation) and C (drift adaptation). Don't copy the authors' code. First identify any missing method specifications.
-
-**Later, for Midterm experiments:**
-> Read AGENTS.md, the team's experiment protocol, and the current code. Check which paper experiments are reproducible. Propose a Core-scope matrix (dataset x baseline x metric x configuration) and implement an auditable script + W&B logging for only the approved experiment. Never invent run results.
-
----
-
-*Maintained by the MLHAT student team. Update this file when team responsibilities, Moodle deadlines, paper interpretation, approved datasets or reproducibility decisions change.*
+1. Kiểm tra repo, README và trạng thái Git; phân biệt **yêu cầu môn**, **fact từ paper**, **quyết định nhóm** và **đề xuất agent**. Ghi việc chưa chốt vào `docs/decisions.md`.
+2. Sửa từng phần nhỏ, giữ công việc của thành viên khác, dùng nhánh/PR để review. Không force-push hay tự đổi giao diện chung khi chưa thống nhất.
+3. Viết code rõ ràng với type hints khi hữu ích, seed/config tường minh và test có ý nghĩa. Sau thay đổi code, chạy test liên quan và báo kết quả thực.
+4. Chỉ tạo module, script, thư mục, hình hoặc slide khi có nội dung thật. Không biến placeholder hay demo thành tuyên bố MLHAT đã hoàn thành.
+5. Khi bàn giao việc lớn, nêu file đã đổi, lệnh/test đã chạy, kết quả, phần còn rủi ro và việc tiếp theo của A/B/C.
