@@ -212,9 +212,24 @@ def choose_split(
     if not candidates:
         return None
 
-    candidates.sort(key=lambda candidate: candidate.gain, reverse=True)
-    best = candidates[0]
-    second_gain = candidates[1].gain if len(candidates) > 1 else 0.0
+    best_by_feature: dict[int, SplitCandidate] = {}
+
+    for candidate in candidates:
+        previous = best_by_feature.get(candidate.feature_index)
+        if previous is None or candidate.gain > previous.gain:
+            best_by_feature[candidate.feature_index] = candidate
+
+    ranked = sorted(
+        best_by_feature.values(),
+        key=lambda candidate: candidate.gain,
+        reverse=True,
+    )
+
+    # Chưa có hai feature để so sánh thì chưa tách.
+    if len(ranked) < 2:
+        return None
+
+    best, second = ranked[:2]
 
     n_labelsets = max(2, len(stats.labelset_counts))
     epsilon = sqrt(
@@ -222,6 +237,6 @@ def choose_split(
         / (2.0 * stats.n_seen)
     )
 
-    if best.gain - second_gain > epsilon:
+    if best.gain - second.gain > epsilon:
         return best
     return None

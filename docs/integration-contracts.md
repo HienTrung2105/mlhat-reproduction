@@ -41,6 +41,21 @@ model.learn_one(x, y)          # cập nhật một mẫu; trả về None
 
 `predict_one` chỉ dự đoán, không cập nhật thống kê học. `learn_one` nhận đúng một mẫu đã có nhãn. Không đổi sang dictionary hoặc thêm đối số bắt buộc vào API này nếu chưa cập nhật hợp đồng và các caller cùng lúc.
 
+### Constructor được runner EXP-01 gọi hiện tại
+
+Đoạn trên mô tả interface online tối thiểu. Lớp cụ thể trong `src/mlhat/tree.py` hiện cần thêm số feature, config và seed:
+
+```python
+model = MLHATTree(
+    n_labels=Y.shape[1],
+    n_features=X.shape[1],
+    config=config["mlhat"],
+    seed=seed,
+)
+```
+
+Phân biệt interface của `predict_one`/`learn_one` với constructor cụ thể này khi viết caller mới.
+
 Bộ dự đoán tại leaf cũng nhận `x`, trả vector `y_hat` cùng shape/kiểu dữ liệu trên, và cập nhật bằng `learn_one(x, y)`. B hiện sở hữu implementation của leaf predictor; A chỉ gọi qua interface.
 
 ## 3. Thứ tự test-then-train

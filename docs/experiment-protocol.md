@@ -23,4 +23,14 @@ A chủ trì, C kiểm tra drift và B tổng hợp W&B. Chạy lại SynHPGrad 
 5. Mỗi run lưu commit, config, seed, phiên bản môi trường, fingerprint dữ liệu, số mẫu, metrics, thời gian, chuỗi metric và URL W&B công khai vào run registry. Thời gian tính phần predict/learn và đánh giá, tách thời gian tải dữ liệu. Ghi thiết bị và phiên bản thư viện.
 6. Bảng kết quả gồm dataset, baseline, metric, paper/reference, nhóm, chênh lệch tuyệt đối và URL run. Chênh tương đối = 100 × (nhóm − tham chiếu)/|tham chiếu| khi cùng giao thức và mẫu số khác 0. Dùng kết quả theo dataset từ artifacts tác giả nếu khớp phiên bản. Nếu paper chỉ có đường cong hoặc trung bình toàn bộ benchmark, trình bày tham chiếu định tính và so sánh các run nhóm trên cùng stream.
 
+## Ghi chú implementation của runner EXP-01
+
+Các giá trị dưới đây mô tả cách code hiện tại triển khai protocol; chúng bổ sung cho tham số paper, không thay thế lựa chọn đã ghi ở trên.
+
+- Với feature số, `numeric_splitter.n_bins=10`: code tạo 10 ngưỡng nội bộ cách đều giữa giá trị nhỏ nhất và lớn nhất đã quan sát tại node.
+- Leaf dùng `n_neighbors=5` cho LP-kNN khi chưa đủ `eta=750` mẫu; khi đạt ngưỡng, dùng bagging Logistic Regression với `n_estimators=10` cho mỗi nhãn. Prediction threshold là `0.5`; trọng số online của cây dùng Poisson `lambda=1`.
+- Splitter hiện xếp hạng tất cả các ngưỡng ứng viên cùng lúc; hai gain cao nhất có thể thuộc cùng một feature. Paper mô tả so sánh hai ứng viên trên các feature khác nhau, nên đây là khác biệt implementation cần tính đến khi diễn giải kết quả.
+- Evaluator hiện cộng dồn metric trên toàn bộ stream và trả example-F1, Hamming loss, subset accuracy, cùng micro-F1. Runner không tạo chuỗi metric theo từng mốc và không áp dụng fading/forgetting cho metric.
+- Trong implementation EXP-01 hiện có, MLHAT chạy cây chính, chưa bật drift detector hoặc alternate/background branches. Vì thế khi mô tả đúng biến thể đã chạy, cần gọi là cây chính-only; không đồng nhất với MLHAT đầy đủ có drift.
+
 Nguồn phương pháp và đối chiếu. [Paper v1](https://arxiv.org/html/2410.20242v1).
