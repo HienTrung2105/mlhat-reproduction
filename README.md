@@ -51,4 +51,13 @@ Midterm có **hai bài nộp riêng**: URL repo GitHub công khai và file `ID.p
 
 ## Cách cộng tác
 
-Tạo nhánh từ `main` cho từng phần việc, commit gọn, mở Pull Request và nhờ ít nhất một thành viên khác review trước khi merge. Không force-push `main`; thống nhất thay đổi giao diện chung giữa A/B/C. Các thư viện hạ tầng hiện dùng gồm NumPy, scikit-learn và, nếu cài tùy chọn, Hugging Face datasets/W&B; chúng không cung cấp sẵn MLHAT.
+Tạo nhánh từ `main` cho từng phần việc. Trước khi push hoặc mở Pull Request, mỗi người tự chạy trong môi trường Python 3.11:
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+Nếu sửa pipeline hoặc demo, chạy thêm `python -m experiments.smoke_baseline`. Trong Pull Request, ghi thay đổi, phần A/B/C phụ trách, căn cứ từ paper nếu sửa MLHAT, lệnh kiểm tra cùng kết quả thật, và phần còn chưa rõ. Nhờ ít nhất một thành viên khác review trước khi merge; không force-push `main` và cần thống nhất khi đổi giao diện chung. Repo hiện không chạy test tự động trên GitHub.
+
+Các thư viện hạ tầng hiện dùng gồm NumPy, scikit-learn và, nếu cài tùy chọn, Hugging Face datasets/W&B; chúng không cung cấp sẵn MLHAT.
