@@ -61,7 +61,12 @@ def main() -> None:
     )
     print("STATUS: DEMO ONLY (synthetic data, simple baseline, NOT MLHAT, NOT reproduction)")
     print(f"Seed: {args.seed} | Samples: {results.n_samples}")
-    print(f"Micro-F1: {results.micro_f1:.4f} | Hamming loss: {results.hamming_loss:.4f}")
+    print(
+        f"Example-based F1: {results.example_f1:.4f} | "
+        f"Hamming loss: {results.hamming_loss:.4f} | "
+        f"Subset accuracy: {results.subset_accuracy:.4f} | "
+        f"Micro-F1: {results.micro_f1:.4f}"
+    )
 
     if args.log_wandb:
         try:
