@@ -1,7 +1,5 @@
 # Giao diện tích hợp A / B / C
 
-**Trạng thái:** Hợp đồng làm việc được chọn để triển khai trên khung hiện tại. B và C có thể review khi ghép code; tài liệu này không khẳng định họ đã xác nhận. Công thức, tín hiệu lỗi và thứ tự cập nhật đặc thù của MLHAT vẫn phải theo paper.
-
 ## Sơ đồ luồng
 
 ```text
