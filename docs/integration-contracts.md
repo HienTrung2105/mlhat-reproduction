@@ -78,3 +78,10 @@ Metric của mẫu `t` dùng dự đoán từ trạng thái mô hình trước k
 5. Chỉ sau đó mới chạy dataset paper, thí nghiệm và W&B. Dữ liệu thô/tải về không commit; theo dõi hướng dẫn trong `data/README.md`.
 
 Repo tác giả chỉ dùng để đọc/chạy/đối chiếu theo quy tắc học thuật của nhóm; không sao chép lõi thuật toán vào implementation nhóm.
+
+## 7. API xác suất dùng nội bộ
+
+- `predict_proba_one(x)` trả vector `float64` shape `(n_labels,)`, mỗi phần tử nằm trong `[0, 1]`. Dùng xác suất này để kết hợp dự đoán của cây chính và cây nền.
+- `predict_one(x)` vẫn là API nhị phân mà evaluator dùng; ngưỡng hiện tại là `0.5` theo cấu hình.
+- Trong `learn_one(x, y)`, tính tín hiệu lỗi từ dự đoán trước cập nhật. Không dùng nhãn hiện tại để dự đoán chính mẫu đó.
+- Đây là phần bổ sung cho giao diện xác suất trong `src/mlhat/interfaces.py`; phần drift và cây nền vẫn do C triển khai.

@@ -4,6 +4,7 @@
     "repo_id": "imodels/multitask-tabular-datasets",
     "file": "yeast.csv",
     "revision": "e649ec66df475f09d760a60bdaa3c3a77819782a",
+    "csv_sha256": "04c8fd8eb1b2267a4b901210628bc958041541f4987356489b4935aa6f35047e",
     "target_suffix": "__target",
     "expected_rows": 2417,
     "expected_features": 103,
@@ -12,5 +13,47 @@
   },
   "protocol": "test_then_train",
   "seeds": [1, 2, 3],
-  "metrics": ["example_f1", "hamming_loss", "subset_accuracy"]
+  "metrics": [
+    "example_f1",
+    "hamming_loss",
+    "subset_accuracy"
+  ],
+  "baseline": {
+    "name": "BR+HAT",
+    "river_version": "0.26.1",
+    "n_models": 14,
+    "grace_period": 200,
+    "delta": 0.00001,
+    "tau": 0.05,
+    "split_criterion": "info_gain",
+    "leaf_prediction": "nba",
+    "nb_threshold": 0,
+    "splitter": "GaussianSplitter",
+    "drift_detector": "ADWIN",
+    "drift_window_threshold": 50,
+    "switch_significance": 0.05,
+    "bootstrap_sampling": true,
+    "prediction_threshold": 0.5
+  },
+  "mlhat": {
+    "delta_spl": 1e-7,
+    "kappa_spl": 200,
+    "delta_alt": 0.05,
+    "kappa_alt": 200,
+    "eta": 750,
+    "lambda": 1,
+    "drift_metric": "hamming_loss",
+    "prediction_threshold": 0.5,
+    "low_leaf": {
+      "method": "label_powerset_knn",
+      "n_neighbors": 5
+    },
+    "high_leaf": {
+      "method": "binary_relevance_bagging_logistic_regression",
+      "n_estimators": 10
+    },
+    "numeric_splitter": {
+      "n_bins": 10
+    }
+  }
 }
