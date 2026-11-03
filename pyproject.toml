@@ -15,7 +15,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
-data = ["datasets>=2.18,<5"]
+data = [
+  "datasets>=2.18,<5",
+  "huggingface_hub>=0.24,<2"
+]
 tracking = ["wandb>=0.17,<1"]
 
 [tool.setuptools.packages.find]

@@ -1,0 +1,16 @@
+{
+  "experiment": "EXP-01",
+  "dataset": {
+    "repo_id": "imodels/multitask-tabular-datasets",
+    "file": "yeast.csv",
+    "revision": "e649ec66df475f09d760a60bdaa3c3a77819782a",
+    "target_suffix": "__target",
+    "expected_rows": 2417,
+    "expected_features": 103,
+    "expected_labels": 14,
+    "shuffle": false
+  },
+  "protocol": "test_then_train",
+  "seeds": [1, 2, 3],
+  "metrics": ["example_f1", "hamming_loss", "subset_accuracy"]
+}
