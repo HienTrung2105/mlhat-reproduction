@@ -1,151 +1,54 @@
-# MLHAT — Independent Paper Reproduction
+# MLHAT — tái triển khai và kiểm chứng bài báo
 
-> **Trạng thái:** Repository skeleton / khung khởi tạo. **Chưa có MLHAT được triển khai và chưa tái tạo kết quả paper.**
->
-> **Nhóm:** 3 thành viên (A/B/C là vai trò tạm). **Môn:** Nhập môn Máy học.
+Nhóm 3 sinh viên đang chuẩn bị tái triển khai độc lập phương pháp **Multi-Label Hoeffding Adaptive Tree (MLHAT)** trong bài báo [*Hoeffding adaptive trees for multi-label classification on data streams*](https://arxiv.org/abs/2410.20242) (2024, DOI: [10.1016/j.knosys.2024.112561](https://doi.org/10.1016/j.knosys.2024.112561)). Mã nguồn của [tác giả](https://github.com/aestebant/mlhat) chỉ dùng để đối chiếu, không sao chép thuật toán.
 
-Bài báo: **Hoeffding adaptive trees for multi-label classification on data streams** (2024).
-- Paper: https://arxiv.org/abs/2410.20242
-- DOI: https://doi.org/10.1016/j.knosys.2024.112561
-- Repo của tác giả (chỉ dùng để kiểm chứng/đối chiếu; **không sao chép lõi thuật toán**): https://github.com/aestebant/mlhat
+**Trạng thái:** repo mới có hạ tầng nhỏ, vòng đánh giá test-then-train và demo baseline trên dữ liệu synthetic. **Chưa có MLHAT hoàn chỉnh, thí nghiệm tái tạo hay kết quả W&B.** Việc paper được duyệt, mã nhóm, deadline và phạm vi thực nghiệm vẫn cần xác nhận; xem [quyết định còn mở](docs/decisions.md).
 
-## 1. Hai bài nộp ở Midterm
+## Bắt đầu
 
-| Moodle | Nộp gì? | Yêu cầu chính |
-| --- | --- | --- |
-| **GitHub repository** | **Một URL GitHub công khai** | Code nhóm tự viết, script thực nghiệm, README, commit thực tế; có thể tiếp tục commit sau khi nộp URL theo hướng dẫn Moodle |
-| **Midterm Slide** | **`ID.pptx`** (`ID` là mã nhóm thật) | **20–40 slide**, **<20 MB**, ghi chú speaker notes **mỗi slide (<=500 từ)**, citations IEEE ngay trên slide, sơ đồ tự vẽ; đọc hiểu + thực nghiệm tái tạo có kết quả thật |
-
-Phần **Final Poster** làm sau; không phải mục tiêu của repo skeleton hiện tại.
-
-## 2. Bắt đầu nhanh (Windows / VS Code)
-
-**Bước 1 — Tạo môi trường:** cần Python **3.10 hoặc 3.11** (khuyên dùng 3.11).
+Cần Python 3.10 hoặc 3.11. Trong thư mục gốc của repo:
 
 ```powershell
-cd mlhat-reproduction
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
-```
-
-Nếu PowerShell chặn việc activate, dùng `cmd.exe` và `.venv\Scripts\activate.bat`, hoặc chạy trực tiếp `.venv\Scripts\python.exe`.
-
-**Bước 2 — Kiểm tra khung có chạy:**
-
-```powershell
 python -m pytest -q
 python -m experiments.smoke_baseline
 ```
 
-`smoke_baseline` chạy **baseline demo trên dữ liệu synthetic**, chỉ để kiểm tra pipeline/metric. **Nó không phải MLHAT, không phải thí nghiệm của paper và kết quả không được dùng để tuyên bố tái tạo.**
+Trên macOS/Linux, dùng `python3.11 -m venv .venv`, `source .venv/bin/activate`, rồi chạy các lệnh `pip`, `pytest` và demo tương ứng. Nếu PowerShell chặn activate, có thể gọi trực tiếp `.venv\Scripts\python.exe`.
 
-**Bước 3 — Chỉ khi cần kết nối HF datasets/W&B:**
+`smoke_baseline` chỉ kiểm tra pipeline bằng dữ liệu synthetic và mô hình SGD theo từng nhãn; kết quả **không phải** kết quả MLHAT hoặc paper. Có thể cài riêng `.[data]` để dùng Hugging Face datasets và `.[tracking]` để ghi W&B khi thực sự cần.
 
-```powershell
-python -m pip install -e ".[data,tracking]"
-# Có thể đăng nhập W&B bằng lệnh `wandb login` trên máy của nhóm.
-# Không commit token hoặc .env thật.
-```
+## Phần hiện có
 
-Để chạy demo và ghi lên W&B, cần tài khoản đã login và project được cấu hình phù hợp:
+| Đường dẫn | Nội dung |
+| --- | --- |
+| `src/mlhat/interfaces.py` | Giao diện `predict_one`/`learn_one` và kiểm tra định dạng mẫu |
+| `src/mlhat/evaluation.py` | Vòng test-then-train và metric demo; cần đối chiếu metric paper trước khi báo cáo |
+| `src/mlhat/data.py` | Hàm tải dataset Hugging Face chung; chưa có dataset ID/schema đã duyệt |
+| `src/mlhat/tree.py` | Khung giao diện cây; phương pháp MLHAT chưa được triển khai |
+| `experiments/smoke_baseline.py` | Demo baseline synthetic, không thuộc thí nghiệm paper |
+| `tests/` | Kiểm tra giao diện và vòng đánh giá hiện có |
+| `docs/decisions.md` | Các quyết định nhóm còn cần xác nhận |
+| `docs/experiment-protocol.md` | Bảng cần điền từ phần thực nghiệm của paper trước khi viết script tái tạo |
 
-```powershell
-python -m experiments.smoke_baseline --log-wandb --wandb-project mlhat-team-demo
-```
+Chỉ tạo thêm script, cấu hình, hình, slide và thư mục kết quả khi có nội dung thật. Không commit dữ liệu tải về, API key, log W&B hoặc số đo chưa chạy.
 
-**Kết quả demo không phải kết quả paper.** Các thí nghiệm chính hiện vẫn là placeholder đợi nhóm xác minh giao thức Section 4.
+## Việc tiếp theo của nhóm
 
-Trên macOS/Linux thay tạo venv và activation bằng:
+1. Xác nhận paper, mã nhóm và hạn nộp từ Moodle; cập nhật `docs/decisions.md`.
+2. Cả ba đọc paper, ghi nhận công thức và các điểm chưa rõ. Điền `docs/experiment-protocol.md` bằng dataset, baseline, metric, cấu hình, seed, hình/bảng paper và nguồn tải dữ liệu.
+3. Chọn Core hay Full scope. Nếu chọn Core, ưu tiên ít nhất hai thí nghiệm quan trọng, gồm so sánh trung tâm, và một phân tích bổ sung do nhóm thiết kế.
+4. A phụ trách tree/splitting và lý thuyết; B phụ trách leaf prediction, data, evaluation và W&B; C phụ trách drift và phối hợp tái tạo. Mỗi người làm slide phần mình và review phần của người khác.
+5. Triển khai MLHAT độc lập từ paper, kiểm tra bằng trường hợp nhỏ, rồi chạy thí nghiệm với dữ liệu tải tự động từ Hugging Face/Kaggle. Ghi config, seed, môi trường và W&B run **public** cho từng kết quả.
 
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-```
+Midterm có **hai bài nộp riêng**: URL repo GitHub công khai và file `ID.pptx` với `ID` là mã nhóm thật. Deck cần 20–40 slide, dưới 20 MB, speaker notes ở mọi slide (tối đa 500 từ/slide), hình nhóm tự làm và trích dẫn IEEE trên slide sử dụng nguồn. Chỉ đưa số liệu thực nghiệm khi truy được về run W&B công khai và code/config tương ứng. Yêu cầu chi tiết và phân công slide đề xuất nằm trong [AGENTS.md](AGENTS.md).
 
-## 3. Ai chịu trách nhiệm phần nào?
+## Kết quả tái tạo
 
-| Vai trò | Nghiên cứu / code chính | Midterm slide (kế hoạch đề xuất) | Phối hợp |
-| --- | --- | --- | --- |
-| **A — Tree & Theory** | Hoeffding Tree/MLHAT nodes, statistics, multi-label split, toán, độ phức tạp | **7–13, 18–20** | Review thuật toán, thiết kế phân tích bổ sung |
-| **B — Multi-label & Evaluation** | Leaf prediction, data loading, metrics, prequential evaluation, W&B | **1–6, 14–15, 21–22** | Chủ trì thí nghiệm 1; **ghép file PPTX**, kiểm tra notes/citations |
-| **C — Drift & Reproduction** | ADWIN/adaptation, nhánh dự phòng, tích hợp, thí nghiệm drift | **16–17, 23–30** | Chủ trì thí nghiệm 2; tổng hợp sai lệch, **không làm toàn bộ thực nghiệm một mình** |
+**Chưa có run tái tạo.** Khi có kết quả thật, thêm bảng `experiment → script/config → W&B run URL → kết quả một dòng` tại đây và phân tích sai lệch so với paper. Không dùng số liệu của demo synthetic làm kết quả tái tạo.
 
-**Cả ba đọc toàn bộ paper và review chéo.** Xem checklist chi tiết tại [`docs/team-roles.md`](docs/team-roles.md), slide plan tại [`docs/midterm-slides.md`](docs/midterm-slides.md).
+## Cách cộng tác
 
-## 4. Cấu trúc repo
-
-```text
-mlhat-reproduction/
-├── AGENTS.md                     # Context + quy tắc AI coding agent
-├── README.md                     # Hướng dẫn nhóm và người đánh giá
-├── CONTRIBUTING.md               # Branch / PR / commit convention
-├── pyproject.toml                # Cài package + dependencies
-├── src/mlhat/                   # Core algorithm (hiện là skeleton có TODO)
-│   ├── interfaces.py            # Interface dùng chung giữa A/B/C
-│   ├── tree.py                  # A: cây MLHAT
-│   ├── splitting.py             # A: tiêu chí chia nhánh
-│   ├── leaves.py                # B: multi-label leaf predictor
-│   ├── drift.py                 # C: drift/adaptive branches
-│   ├── evaluation.py            # B: vòng test-then-train + metric
-│   └── data.py                  # B: loader dữ liệu HF (generic)
-├── experiments/
-│   ├── smoke_baseline.py        # DEMO kiểm tra hệ thống, KHÔNG PHẢI MLHAT
-│   ├── reproduce_exp1.py        # TODO: thí nghiệm 1 từ paper
-│   ├── reproduce_exp2.py        # TODO: thí nghiệm 2 từ paper
-│   └── sensitivity.py           # TODO: phân tích thêm tự thiết kế
-├── configs/                    # Config đã chọn, không bịa paper defaults
-├── tests/                      # Test cho logic đã được triển khai
-├── docs/                       # Paper notes, kế hoạch, giao thức, quyết định
-├── results/                    # README + run registry, chưa có kết quả giả
-├── slides/                     # Slide plan / file PPTX khi nhóm tạo
-├── figures/                    # Hình do nhóm tự tạo
-├── data/                       # Hướng dẫn nguồn, không commit dataset lớn
-└── .github/workflows/          # CI chạy pytest
-```
-
-## 5. Việc đầu tiên khi nhóm vừa chọn paper
-
-1. Xác minh paper được duyệt trên Moodle, team ID, deadline. Ghi vào `docs/decisions.md`.
-2. Cả 3 đọc **Abstract -> Introduction -> Conclusion -> Related Work -> Experiments -> Method**; viết `docs/paper-notes.md`.
-3. Điền **giao thức thí nghiệm có căn cứ từ bài báo** vào `docs/experiment-protocol.md`: dataset, baseline, metric, tham số, hình/bảng đối chiếu, số lần chạy/seed.
-4. Chốt **Core Scope** hoặc Full Scope; Core phải có **ít nhất hai thí nghiệm quan trọng (bao gồm phép so sánh chính)** và **phân tích bổ sung**.
-5. Thiết kế interface A/B/C, làm unit tests rồi mới triển khai lõi từ paper, không copy code tác giả.
-6. Chạy thật và theo dõi trên **W&B public**; chỉ thêm kết quả vào [`results/run-registry.csv`](results/run-registry.csv) sau khi run có thật.
-7. Hoàn thiện slide và speaker notes; số liệu trong slide phải truy ngược được về W&B run công khai.
-
-## 6. Hướng dẫn W&B / dữ liệu
-
-- Mọi thí nghiệm paper phải tải dữ liệu **tự động từ Hugging Face hoặc Kaggle** trong lần chạy. `src/mlhat/data.py` có generic HF loader, **chưa xác định dataset ID và schema cụ thể**.
-- Đăng nhập W&B bằng `wandb login` (không viết API key vào repo). Config, metrics và run URL cần truy xuất được.
-- W&B project phải **public** theo yêu cầu môn. Repo GitHub public không tự làm W&B public.
-- Điền bảng ánh xạ script -> W&B run -> mô tả kết quả trong README **khi có run thật**. Hiện tại: **chưa có**.
-
-### Reproduction runs (chưa có — chỉ cập nhật sau khi chạy thành công)
-
-| Experiment | Script | W&B run (public) | Kết quả |
-| --- | --- | --- | --- |
-| _Chưa thực hiện_ | — | — | — |
-
-## 7. Nguồn và quy tắc đạo đức học thuật
-
-Đóng góp lõi MLHAT phải do nhóm tự triển khai từ paper. Mã của tác giả chỉ đọc/chạy để **kiểm chứng và so sánh** chứ **không sao chép/port**. Các thư viện tiêu chuẩn sử dụng trong hạ tầng và baseline phải được ghi nguồn trong README. Không bịa số liệu, không chụp lại hình paper làm hình nhóm, không nhét token vào GitHub.
-
-**Cho AI agent:** trước khi sửa code, đọc `AGENTS.md` và các `docs/` liên quan. Mỗi thay đổi cần giải thích giả định, test đã chạy, những gì chưa được triển khai.
-
-## 8. Tạo repo GitHub và đẩy code lên
-
-Tạo một repository **trống** trên GitHub, ví dụ `mlhat-reproduction` (đừng chọn tự tạo README để tránh conflict), sau đó mở terminal trong folder này:
-
-```bash
-git init
-git add .
-git commit -m "chore: initialize MLHAT reproduction scaffold"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/mlhat-reproduction.git
-git push -u origin main
-```
-
-Thay `YOUR_USERNAME` bằng tài khoản/organization thật. **GitHub clone là thao tác tải repo về máy; còn tình huống này là tạo folder local rồi push lên GitHub.** Từ máy thành viên khác mới dùng `git clone URL`.
+Tạo nhánh từ `main` cho từng phần việc, commit gọn, mở Pull Request và nhờ ít nhất một thành viên khác review trước khi merge. Không force-push `main`; thống nhất thay đổi giao diện chung giữa A/B/C. Các thư viện hạ tầng hiện dùng gồm NumPy, scikit-learn và, nếu cài tùy chọn, Hugging Face datasets/W&B; chúng không cung cấp sẵn MLHAT.

@@ -111,43 +111,30 @@ Each slide owner must submit **editable team-original diagrams/plots, concise sl
 7. **Create Midterm deck:** 20–40 slides, real evidence, speaker notes, original figures, citations; final mutual review.
 8. **Submit separately:** one public GitHub URL and one correctly named `ID.pptx` on Moodle. Record actual submission deadlines when known.
 
-## 7. Proposed repository layout (suggestion, not evidence of existing files)
+## 7. Current minimal repository layout
 
 ```text
 mlhat-reproduction/
-├── AGENTS.md                 # this agent-facing project context
-├── README.md                 # human-facing overview, setup, runs, W&B mapping
-├── requirements.txt          # or pyproject.toml, after environment decision
+├── AGENTS.md                 # project context and working rules
+├── README.md                 # current status, setup and next steps
+├── pyproject.toml             # Python package and dependencies
 ├── .gitignore
 ├── docs/
-│   ├── paper-notes.md
-│   ├── method-and-math.md
-│   ├── experiment-protocol.md
-│   └── decisions.md
+│   ├── decisions.md           # unresolved team choices
+│   └── experiment-protocol.md # paper-grounded experiment plan
 ├── src/
 │   └── mlhat/
-│       ├── tree.py
-│       ├── splitting.py
-│       ├── leaves.py
-│       ├── drift.py
+│       ├── tree.py            # interface stub; MLHAT not implemented
+│       ├── interfaces.py
+│       ├── evaluation.py
+│       ├── data.py
 │       └── __init__.py
 ├── experiments/
-│   ├── data.py
-│   ├── evaluate.py
-│   ├── baselines.py
-│   ├── reproduce_exp1.py
-│   ├── reproduce_exp2.py
-│   └── sensitivity.py
-├── configs/
-├── tests/
-├── figures/
-├── slides/
-├── poster/                   # can remain empty until later stage
-└── data/
-    └── README.md             # describe remote automatic retrieval, not raw data
+│   └── smoke_baseline.py      # synthetic pipeline demonstration
+└── tests/                     # tests for the current infrastructure
 ```
 
-The exact file names/modules may change **after reading the paper**. No need to create empty directories/files solely for appearance. Use `.gitkeep` only if necessary. Keep the public repository clean and readable.
+Add paper notes, MLHAT modules, reproduction scripts, configs, figures, slides and run evidence when the team has substantive content. The exact names may change after reading the paper; do not create empty files or directories solely for appearance.
 
 ## 8. Coding agent behavior rules
 
