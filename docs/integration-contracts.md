@@ -90,7 +90,7 @@ Metric của mẫu `t` dùng dự đoán từ trạng thái mô hình trước k
 2. B làm leaf predictor và evaluator tuân theo API/schema ở trên.
 3. C làm drift manager tuân theo `DriftAction`; A/C kiểm tra luồng tạo, giữ, thay thế hoặc bỏ nhánh nền.
 4. Cả nhóm kiểm tra stream nhỏ theo đúng thứ tự predict -> metric -> learn.
-5. Chỉ sau đó mới chạy dataset paper, thí nghiệm và W&B. Dữ liệu thô/tải về không commit; theo dõi hướng dẫn trong `data/README.md`.
+5. Chỉ sau đó mới chạy dataset paper, thí nghiệm và W&B. Dữ liệu thô/tải về không commit; xem [README gốc](../README.md) về quy tắc lưu dữ liệu.
 
 Repo tác giả chỉ dùng để đọc/chạy/đối chiếu theo quy tắc học thuật của nhóm; không sao chép lõi thuật toán vào implementation nhóm.
 
