@@ -1,67 +1,64 @@
 # MLHAT — tái triển khai và kiểm chứng bài báo
 
-Nhóm 3 sinh viên đang chuẩn bị tái triển khai độc lập phương pháp **Multi-Label Hoeffding Adaptive Tree (MLHAT)** trong bài báo [*Hoeffding adaptive trees for multi-label classification on data streams*](https://arxiv.org/abs/2410.20242) (2024, DOI: [10.1016/j.knosys.2024.112561](https://doi.org/10.1016/j.knosys.2024.112561)). Mã nguồn của [tác giả](https://github.com/aestebant/mlhat) chỉ dùng để đối chiếu, không sao chép thuật toán.
+Nhóm 10 đang tự triển khai phương pháp **Multi-Label Hoeffding Adaptive Tree (MLHAT)** từ bài báo [*Hoeffding adaptive trees for multi-label classification on data streams*](https://arxiv.org/abs/2410.20242) của Esteban và cộng sự (2024, [DOI](https://doi.org/10.1016/j.knosys.2024.112561)). Mục tiêu là hiểu thuật toán, tái tạo một phần thí nghiệm và giải thích sai lệch giữa kết quả của nhóm với bài báo.
 
-**Trạng thái:** code hiện có cây chính, bộ dự đoán lá, pipeline EXP-01 và phần drift đang được tích hợp trên nhánh C. **Chưa có run tái tạo được xác thực hay kết quả W&B công khai.** Các giả định drift cần nhóm review trước khi xem đây là MLHAT hoàn chỉnh. Nhóm đã ghi nhận mã nhóm **10**, phân công A/B/C và phạm vi Core trong [quyết định dự án](docs/decisions.md). Hạn nộp ghi trong [timeline](docs/timeline.md) cần đối chiếu thông báo Moodle.
+## Trạng thái
 
-## Bắt đầu
+Repo đã có cây chính và phép chia trên đặc trưng số, bộ dự đoán nhiều nhãn tại lá, cơ chế phát hiện drift và cây con dự phòng, bộ tải Yeast, baseline BR+HAT và vòng đánh giá test-then-train. Phần drift đã qua kiểm thử trên các tình huống nhỏ nhưng còn những [giả định cần nhóm rà lại](docs/decisions.md) trước khi dùng để kết luận về MLHAT.
 
-Cần Python 3.11 trở lên theo `pyproject.toml`. Trong thư mục gốc của repo:
+**Chưa có run tái tạo được xác thực hoặc W&B run công khai.** Yeast đã được ghim phiên bản và checksum; nguồn cho SynHPSud và SynHPGrad chưa được ghim. Script EXP-01 hiện có là hạ tầng chạy, chưa phải bằng chứng tái tạo. Script `smoke_baseline` chỉ là demo synthetic với mô hình SGD theo từng nhãn.
+
+## Cài đặt và kiểm thử
+
+Repo yêu cầu Python 3.11 trở lên. Trong thư mục gốc:
 
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev,online]"
 python -m pytest -q
 python -m experiments.smoke_baseline
 ```
 
-Trên macOS/Linux, dùng `python3.11 -m venv .venv`, `source .venv/bin/activate`, rồi chạy các lệnh `pip`, `pytest` và demo tương ứng. Nếu PowerShell chặn activate, có thể gọi trực tiếp `.venv\Scripts\python.exe`.
+Lệnh cuối chỉ kiểm tra pipeline demo. Khi cần dữ liệu Hugging Face hoặc ghi W&B, cài thêm `.[data]` hoặc `.[tracking]`. Không đưa dữ liệu tải về, khóa API, checkpoint hay log W&B local vào Git.
 
-`smoke_baseline` chỉ kiểm tra pipeline bằng dữ liệu synthetic và mô hình SGD theo từng nhãn; kết quả **không phải** kết quả MLHAT hoặc paper. Có thể cài riêng `.[data]` để dùng Hugging Face datasets và `.[tracking]` để ghi W&B khi thực sự cần.
+## Các phần trong repo
 
-## Phần hiện có
+| Phần | Tệp chính | Nội dung |
+| --- | --- | --- |
+| Cây và chia nhánh | [`tree.py`](src/mlhat/tree.py), [`splitting.py`](src/mlhat/splitting.py) | Thống kê node, chọn split và cập nhật cây online |
+| Drift | [`drift.py`](src/mlhat/drift.py) | ADWIN, so lỗi hai cây và quyết định mở, thay hoặc bỏ cây con dự phòng |
+| Dự đoán tại lá | [`leaves.py`](src/mlhat/leaves.py) | Label Powerset + kNN; Binary Relevance + bagging Logistic Regression |
+| Dữ liệu và đánh giá | [`data.py`](src/mlhat/data.py), [`evaluation.py`](src/mlhat/evaluation.py) | Tải Yeast, kiểm tra schema, dự đoán trước khi học và tính metric |
+| Thí nghiệm | [`experiments/`](experiments/), [`configs/`](configs/) | Baseline BR+HAT, cấu hình và script EXP-01 |
+| Kiểm thử | [`tests/`](tests/) | Kiểm tra giao diện, metric, ADWIN và vòng đời cây con dự phòng |
 
-| Đường dẫn | Nội dung |
+Chi tiết về giao diện A/B/C nằm trong [integration-contracts.md](docs/integration-contracts.md). Những chỗ paper chưa rõ và lựa chọn triển khai cần xác nhận được ghi trong [decisions.md](docs/decisions.md).
+
+## Phạm vi tái tạo đã chọn
+
+| Mục | So sánh hoặc phân tích | Tình trạng |
+| --- | --- | --- |
+| EXP-01 | MLHAT và BR+HAT trên Yeast | Có loader, config và runner; chưa có run báo cáo |
+| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Chưa ghim nguồn stream và chưa có runner |
+| EXTRA-01 | Độ nhạy theo `kappa_alt = 100, 200, 500` trên SynHPGrad | Chưa chạy |
+
+Nhóm dùng thứ tự stream gốc, dự đoán trước khi học từng mẫu và báo example-based F1, Hamming loss, subset accuracy. Giao thức, seed, tham số, nguồn dữ liệu và giới hạn khi đối chiếu số liệu paper nằm trong [experiment-protocol.md](docs/experiment-protocol.md). Evaluator hiện tính trung bình toàn stream; paper dùng forgetting factor `0.995` và đánh giá mỗi 50 mẫu, nên chưa thể xem hai giá trị là cùng giao thức.
+
+Khi có run hợp lệ, README sẽ ghi ánh xạ **thí nghiệm → script/config → W&B run public → kết quả**, rồi đối chiếu các giá trị so sánh được với paper. Không dùng số của demo synthetic làm kết quả tái tạo.
+
+## Nhóm và bài nộp
+
+| Thành viên | Phần chính |
 | --- | --- |
-| `src/mlhat/interfaces.py` | Giao diện `predict_one`/`learn_one` và kiểm tra định dạng mẫu |
-| `src/mlhat/evaluation.py` | Vòng test-then-train, example-F1, Hamming loss, subset accuracy và micro-F1; chưa có forgetting factor của paper |
-| `src/mlhat/data.py` | Loader Yeast đã ghim revision và checksum; hai stream Hyperplane chưa ghim nguồn |
-| `src/mlhat/tree.py`, `src/mlhat/splitting.py` | Cây chính, thống kê node và split số; nhánh C tích hợp cây nền và sự kiện drift |
-| `src/mlhat/drift.py` | ADWIN và chính sách mở, thay, bỏ nhánh nền theo Eq. (16) |
-| `src/mlhat/leaves.py` | Dự đoán tại lá bằng LP+kNN và BR+bagging LR |
-| `experiments/smoke_baseline.py` | Demo baseline synthetic, không thuộc thí nghiệm paper |
-| `tests/` | Kiểm tra giao diện và vòng đánh giá hiện có |
-| `docs/decisions.md` | Mã nhóm, phân công và quyết định phạm vi Core |
-| `docs/experiment-protocol.md` | Kế hoạch EXP-01, EXP-02 và EXTRA-01; còn phải xác minh nguồn dữ liệu |
-| `docs/integration-contracts.md` | Giao diện tích hợp A/B/C đã được nhóm cập nhật |
-| `docs/paper-notes.md` | Ghi chú phương pháp và các điểm cần đối chiếu paper |
+| A — Phạm Thái Minh | Cây, thống kê node, split và lý thuyết |
+| B — Vòng Bảo Thắng | Lá, dữ liệu, metric, W&B và EXP-01 |
+| C — Đàng Trung Hiện | Drift, EXP-02 và phân tích sai lệch |
 
-Chỉ tạo thêm script, cấu hình, hình, slide và thư mục kết quả khi có nội dung thật. Không commit dữ liệu tải về, API key, log W&B hoặc số đo chưa chạy.
+Midterm gồm **URL repo GitHub công khai** và file **`10.pptx`** riêng. Deck cần 20–40 slide, dưới 20 MB, có speaker notes trên mọi slide và trích dẫn IEEE tại slide dùng nguồn. Số liệu thực nghiệm phải truy được về code, config và W&B run công khai. Xem [kế hoạch slide](docs/midterm-slides.md) và [timeline](docs/timeline.md); hạn nộp cần đối chiếu Moodle.
 
-## Việc tiếp theo của nhóm
+Mỗi phần việc nên ở một nhánh để thành viên khác review trước khi merge. Khi sửa code, chạy test liên quan và ghi lệnh cùng kết quả trong Pull Request.
 
-1. Đối chiếu hạn nộp trong `docs/timeline.md` với Moodle và cập nhật khi có thông báo chính thức.
-2. Cả ba tiếp tục kiểm chứng `docs/paper-notes.md` và `docs/experiment-protocol.md` theo paper; ghim nguồn, revision và quyền sử dụng dataset trước khi chạy.
-3. Thực hiện phạm vi Core đã ghi: hai thí nghiệm chính và một phân tích bổ sung, chỉ báo cáo số liệu từ run thật.
-4. A phụ trách tree/splitting và lý thuyết; B phụ trách leaf prediction, data, evaluation và W&B; C phụ trách drift và phối hợp tái tạo. Mỗi người làm slide phần mình và review phần của người khác.
-5. Triển khai MLHAT độc lập từ paper, kiểm tra bằng trường hợp nhỏ, rồi chạy thí nghiệm với dữ liệu tải tự động từ Hugging Face/Kaggle. Ghi config, seed, môi trường và W&B run **public** cho từng kết quả.
+## Nguồn và phần tái sử dụng
 
-Midterm có **hai bài nộp riêng**: URL repo GitHub công khai và file `10.pptx`. Deck cần 20–40 slide, dưới 20 MB, speaker notes ở mọi slide (tối đa 500 từ/slide), hình nhóm tự làm và trích dẫn IEEE trên slide sử dụng nguồn. Chỉ đưa số liệu thực nghiệm khi truy được về run W&B công khai và code/config tương ứng. Phân công cụ thể ở [kế hoạch slide](docs/midterm-slides.md).
+Code MLHAT của nhóm dựa trên mô tả và công thức trong [paper](https://arxiv.org/html/2410.20242v1). [Repo tác giả](https://github.com/aestebant/mlhat) chỉ dùng để kiểm chứng và đối chiếu độc lập; nhóm không sao chép code lõi.
 
-## Kết quả tái tạo
-
-**Chưa có run tái tạo.** Khi có kết quả thật, thêm bảng `experiment → script/config → W&B run URL → kết quả một dòng` tại đây và phân tích sai lệch so với paper. Không dùng số liệu của demo synthetic làm kết quả tái tạo.
-
-## Cách cộng tác
-
-Tạo nhánh từ `main` cho từng phần việc. Trước khi push hoặc mở Pull Request, mỗi người tự chạy trong môi trường Python 3.11:
-
-```powershell
-python -m pip install -e ".[dev,online]"
-python -m pytest -q
-```
-
-Nếu sửa pipeline hoặc demo, chạy thêm `python -m experiments.smoke_baseline`. Trong Pull Request, ghi thay đổi, phần A/B/C phụ trách, căn cứ từ paper nếu sửa MLHAT, lệnh kiểm tra cùng kết quả thật, và phần còn chưa rõ. Nhờ ít nhất một thành viên khác review trước khi merge; không force-push `main` và cần thống nhất khi đổi giao diện chung. Repo hiện không chạy test tự động trên GitHub.
-
-Các thư viện hạ tầng hiện dùng gồm NumPy, scikit-learn và River 0.26.1 (ADWIN, bộ dự đoán tại lá và baseline BR+HAT). Hugging Face datasets/W&B là phụ thuộc tùy chọn cho dữ liệu và tracking. Phần chính sách cây MLHAT, split và thay nhánh nền do nhóm tự triển khai; không dùng package MLHAT có sẵn.
+Repo dùng NumPy và scikit-learn cho hạ tầng; River 0.26.1 cung cấp ADWIN, các bộ học ở lá và baseline BR+HAT. Hugging Face datasets dùng để tải dữ liệu bằng code, còn W&B dùng để lưu bằng chứng run khi thí nghiệm được thực hiện.
