@@ -29,8 +29,8 @@ Các giá trị dưới đây mô tả cách code hiện tại triển khai prot
 
 - Với feature số, `numeric_splitter.n_bins=10`: code tạo 10 ngưỡng nội bộ cách đều giữa giá trị nhỏ nhất và lớn nhất đã quan sát tại node.
 - Leaf dùng `n_neighbors=5` cho LP-kNN khi chưa đủ `eta=750` mẫu; khi đạt ngưỡng, dùng bagging Logistic Regression với `n_estimators=10` cho mỗi nhãn. Prediction threshold là `0.5`; trọng số online của cây dùng Poisson `lambda=1`.
-- Splitter hiện xếp hạng tất cả các ngưỡng ứng viên cùng lúc; hai gain cao nhất có thể thuộc cùng một feature. Paper mô tả so sánh hai ứng viên trên các feature khác nhau, nên đây là khác biệt implementation cần tính đến khi diễn giải kết quả.
+- Splitter chọn ngưỡng tốt nhất cho từng feature trước khi so hai feature tốt nhất, theo Eq. (9). Số bin bằng 10 là lựa chọn implementation của nhóm.
 - Evaluator hiện cộng dồn metric trên toàn bộ stream và trả example-F1, Hamming loss, subset accuracy, cùng micro-F1. Runner không tạo chuỗi metric theo từng mốc và không áp dụng fading/forgetting cho metric.
-- Trong implementation EXP-01 hiện có, MLHAT chạy cây chính, chưa bật drift detector hoặc alternate/background branches. Vì thế khi mô tả đúng biến thể đã chạy, cần gọi là cây chính-only; không đồng nhất với MLHAT đầy đủ có drift.
+- Trên nhánh C, code đã tích hợp detector và nhánh nền; các giả định chưa chốt được ghi trong [decisions.md](decisions.md). Chưa có run EXP-01 được xác thực lại với code này, nên không dùng số cũ của biến thể chỉ có cây chính để báo cáo MLHAT hoàn chỉnh.
 
 Nguồn phương pháp và đối chiếu. [Paper v1](https://arxiv.org/html/2410.20242v1).

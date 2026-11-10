@@ -40,6 +40,8 @@
     "kappa_spl": 200,
     "delta_alt": 0.05,
     "kappa_alt": 200,
+    "adwin_delta": 0.002,
+    "drift_enabled": true,
     "eta": 750,
     "lambda": 1,
     "drift_metric": "hamming_loss",
