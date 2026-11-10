@@ -100,3 +100,11 @@ Repo tác giả chỉ dùng để đọc/chạy/đối chiếu theo quy tắc h�
 - `predict_one(x)` vẫn là API nhị phân mà evaluator dùng; ngưỡng hiện tại là `0.5` theo cấu hình.
 - Trong `learn_one(x, y)`, tính tín hiệu lỗi từ dự đoán trước cập nhật. Không dùng nhãn hiện tại để dự đoán chính mẫu đó.
 - Đây là phần bổ sung cho giao diện xác suất trong `src/mlhat/interfaces.py`; phần drift và cây nền vẫn do C triển khai.
+
+## 8. Trạng thái tích hợp drift trên nhánh C
+
+- `MLHATTree` nhận `drift_enabled` trong config. Config EXP-01 bật drift; biến thể tắt drift cho EXP-02 đặt `false` trong config riêng khi B/C tạo runner. API `predict_one` và `learn_one` không đổi.
+- Mỗi node có manager và có thể có một `background` root. Manager nhận Hamming loss của dự đoán trước cập nhật, cùng số mẫu có trọng số của hai root; action được áp dụng trước khi học mẫu hiện tại. Mẫu tạo nhánh nền được học vào cả cây chính và nhánh mới, nhưng nhánh mới chưa có dự đoán để cập nhật detector trên chính mẫu đó.
+- Cùng một trọng số Poisson của mẫu được dùng cho thống kê cây chính và các cây nền. Detector nhận một lỗi Hamming loss không nhân trọng số cho mỗi mẫu, theo Algorithm 1.
+- Các action có `DriftEvent(sample_index, node_id, depth, action)` để runner có thể ghi cảnh báo, thay và bỏ nhánh. Nhánh được thay reset detector ở root trước khi tiếp tục.
+- Các giả định chưa chốt về warning, lỗi cây nền và trọng số dự đoán được ghi ở [decisions.md](decisions.md); cần review chéo trước khi chạy thí nghiệm chính thức.

@@ -2,16 +2,16 @@
 
 Nhóm 3 sinh viên đang chuẩn bị tái triển khai độc lập phương pháp **Multi-Label Hoeffding Adaptive Tree (MLHAT)** trong bài báo [*Hoeffding adaptive trees for multi-label classification on data streams*](https://arxiv.org/abs/2410.20242) (2024, DOI: [10.1016/j.knosys.2024.112561](https://doi.org/10.1016/j.knosys.2024.112561)). Mã nguồn của [tác giả](https://github.com/aestebant/mlhat) chỉ dùng để đối chiếu, không sao chép thuật toán.
 
-**Trạng thái:** repo mới có hạ tầng nhỏ, vòng đánh giá test-then-train và demo baseline trên dữ liệu synthetic. **Chưa có MLHAT hoàn chỉnh, thí nghiệm tái tạo hay kết quả W&B.** Nhóm đã ghi nhận mã nhóm **10**, phân công A/B/C và phạm vi Core trong [quyết định dự án](docs/decisions.md). Hạn nộp ghi trong [timeline](docs/timeline.md) cần đối chiếu thông báo Moodle.
+**Trạng thái:** code hiện có cây chính, bộ dự đoán lá, pipeline EXP-01 và phần drift đang được tích hợp trên nhánh C. **Chưa có run tái tạo được xác thực hay kết quả W&B công khai.** Các giả định drift cần nhóm review trước khi xem đây là MLHAT hoàn chỉnh. Nhóm đã ghi nhận mã nhóm **10**, phân công A/B/C và phạm vi Core trong [quyết định dự án](docs/decisions.md). Hạn nộp ghi trong [timeline](docs/timeline.md) cần đối chiếu thông báo Moodle.
 
 ## Bắt đầu
 
-Cần Python 3.10 hoặc 3.11. Trong thư mục gốc của repo:
+Cần Python 3.11 trở lên theo `pyproject.toml`. Trong thư mục gốc của repo:
 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,online]"
 python -m pytest -q
 python -m experiments.smoke_baseline
 ```
@@ -25,9 +25,11 @@ Trên macOS/Linux, dùng `python3.11 -m venv .venv`, `source .venv/bin/activate`
 | Đường dẫn | Nội dung |
 | --- | --- |
 | `src/mlhat/interfaces.py` | Giao diện `predict_one`/`learn_one` và kiểm tra định dạng mẫu |
-| `src/mlhat/evaluation.py` | Vòng test-then-train và metric demo; cần đối chiếu metric paper trước khi báo cáo |
-| `src/mlhat/data.py` | Hàm tải dataset Hugging Face chung; chưa có dataset ID/schema đã duyệt |
-| `src/mlhat/tree.py` | Khung giao diện cây; phương pháp MLHAT chưa được triển khai |
+| `src/mlhat/evaluation.py` | Vòng test-then-train, example-F1, Hamming loss, subset accuracy và micro-F1; chưa có forgetting factor của paper |
+| `src/mlhat/data.py` | Loader Yeast đã ghim revision và checksum; hai stream Hyperplane chưa ghim nguồn |
+| `src/mlhat/tree.py`, `src/mlhat/splitting.py` | Cây chính, thống kê node và split số; nhánh C tích hợp cây nền và sự kiện drift |
+| `src/mlhat/drift.py` | ADWIN và chính sách mở, thay, bỏ nhánh nền theo Eq. (16) |
+| `src/mlhat/leaves.py` | Dự đoán tại lá bằng LP+kNN và BR+bagging LR |
 | `experiments/smoke_baseline.py` | Demo baseline synthetic, không thuộc thí nghiệm paper |
 | `tests/` | Kiểm tra giao diện và vòng đánh giá hiện có |
 | `docs/decisions.md` | Mã nhóm, phân công và quyết định phạm vi Core |
@@ -56,10 +58,10 @@ Midterm có **hai bài nộp riêng**: URL repo GitHub công khai và file `10.p
 Tạo nhánh từ `main` cho từng phần việc. Trước khi push hoặc mở Pull Request, mỗi người tự chạy trong môi trường Python 3.11:
 
 ```powershell
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,online]"
 python -m pytest -q
 ```
 
 Nếu sửa pipeline hoặc demo, chạy thêm `python -m experiments.smoke_baseline`. Trong Pull Request, ghi thay đổi, phần A/B/C phụ trách, căn cứ từ paper nếu sửa MLHAT, lệnh kiểm tra cùng kết quả thật, và phần còn chưa rõ. Nhờ ít nhất một thành viên khác review trước khi merge; không force-push `main` và cần thống nhất khi đổi giao diện chung. Repo hiện không chạy test tự động trên GitHub.
 
-Các thư viện hạ tầng hiện dùng gồm NumPy, scikit-learn và, nếu cài tùy chọn, Hugging Face datasets/W&B; chúng không cung cấp sẵn MLHAT.
+Các thư viện hạ tầng hiện dùng gồm NumPy, scikit-learn và River 0.26.1 (ADWIN, bộ dự đoán tại lá và baseline BR+HAT). Hugging Face datasets/W&B là phụ thuộc tùy chọn cho dữ liệu và tracking. Phần chính sách cây MLHAT, split và thay nhánh nền do nhóm tự triển khai; không dùng package MLHAT có sẵn.
