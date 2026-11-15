@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mlhat-reproduction-team"
 version = "0.1.0"
-description = "Research-course scaffold for independent MLHAT reproduction (not yet implemented)"
+description = "Independent MLHAT implementation and experiment pipeline; no verified reproduction runs yet"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -20,6 +20,7 @@ data = [
   "huggingface_hub>=0.24,<2"
 ]
 tracking = ["wandb>=0.17,<1"]
+plots = ["matplotlib>=3.8,<4"]
 online = ["river==0.26.1"]
 
 [tool.setuptools.packages.find]

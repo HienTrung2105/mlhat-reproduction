@@ -6,7 +6,7 @@ Nhóm 10 đang tự triển khai phương pháp **Multi-Label Hoeffding Adaptive
 
 Repo đã có cây chính và phép chia trên đặc trưng số, bộ dự đoán nhiều nhãn tại lá, cơ chế phát hiện drift và cây con dự phòng, bộ tải Yeast, baseline BR+HAT và vòng đánh giá test-then-train. Phần drift đã qua kiểm thử trên các tình huống nhỏ nhưng còn những [giả định cần nhóm rà lại](docs/decisions.md) trước khi dùng để kết luận về MLHAT.
 
-**Chưa có run tái tạo được xác thực hoặc W&B run công khai.** Yeast đã được ghim phiên bản và checksum; nguồn cho SynHPSud và SynHPGrad chưa được ghim. Script EXP-01 hiện có là hạ tầng chạy, chưa phải bằng chứng tái tạo. Script `smoke_baseline` chỉ là demo synthetic với mô hình SGD theo từng nhãn.
+**Chưa có run tái tạo được xác thực hoặc W&B run công khai.** Yeast đã được ghim phiên bản và checksum. SynHPSud/SynHPGrad đã được đăng public tại [hanggio2105/mlhat-hyperplane](https://huggingface.co/datasets/hanggio2105/mlhat-hyperplane), ghim revision và kiểm checksum khớp nguyên byte với file gốc tác giả. Runner EXP-02 đã có nhưng chưa chạy báo cáo. Script EXP-01 hiện có là hạ tầng chạy, chưa phải bằng chứng tái tạo. Script `smoke_baseline` chỉ là demo synthetic với mô hình SGD theo từng nhãn.
 
 ## Cài đặt và kiểm thử
 
@@ -38,7 +38,7 @@ Chi tiết về giao diện A/B/C nằm trong [integration-contracts.md](docs/in
 | Mục | So sánh hoặc phân tích | Tình trạng |
 | --- | --- | --- |
 | EXP-01 | MLHAT và BR+HAT trên Yeast | Có loader, config và runner; chưa có run báo cáo |
-| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Chưa ghim nguồn stream và chưa có runner |
+| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Có nguồn HF đã ghim/checksum và runner; chưa có run W&B public |
 | EXTRA-01 | Độ nhạy theo `kappa_alt = 100, 200, 500` trên SynHPGrad | Chưa chạy |
 
 Nhóm dùng thứ tự stream gốc, dự đoán trước khi học từng mẫu và báo example-based F1, Hamming loss, subset accuracy. Giao thức, seed, tham số, nguồn dữ liệu và giới hạn khi đối chiếu số liệu paper nằm trong [experiment-protocol.md](docs/experiment-protocol.md). Evaluator hiện tính trung bình toàn stream; paper dùng forgetting factor `0.995` và đánh giá mỗi 50 mẫu, nên chưa thể xem hai giá trị là cùng giao thức.
