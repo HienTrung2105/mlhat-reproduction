@@ -6,7 +6,7 @@ Nhóm 10 đang tự triển khai phương pháp **Multi-Label Hoeffding Adaptive
 
 Repo đã có cây chính và phép chia trên đặc trưng số, bộ dự đoán nhiều nhãn tại lá, cơ chế phát hiện drift và cây con dự phòng, bộ tải Yeast, baseline BR+HAT và vòng đánh giá test-then-train. Phần drift đã qua kiểm thử trên các tình huống nhỏ nhưng còn những [giả định cần nhóm rà lại](docs/decisions.md) trước khi dùng để kết luận về MLHAT.
 
-**Chưa có run tái tạo được xác thực hoặc W&B run công khai.** Yeast đã được ghim phiên bản và checksum. SynHPSud/SynHPGrad đã được đăng public tại [hanggio2105/mlhat-hyperplane](https://huggingface.co/datasets/hanggio2105/mlhat-hyperplane), ghim revision và kiểm checksum khớp nguyên byte với file gốc tác giả. Runner EXP-02 đã có nhưng chưa chạy báo cáo. Script EXP-01 hiện có là hạ tầng chạy, chưa phải bằng chứng tái tạo. Script `smoke_baseline` chỉ là demo synthetic với mô hình SGD theo từng nhãn.
+**EXP-02 đã hoàn tất 18 run cục bộ ngày 16/11/2026; chưa có W&B public và chưa xác thực đối chiếu mã gốc.** Xem [bảng kết quả và giới hạn diễn giải](docs/exp2-results.md). Yeast đã được ghim phiên bản và checksum. SynHPSud/SynHPGrad đã được đăng public tại [hanggio2105/mlhat-hyperplane](https://huggingface.co/datasets/hanggio2105/mlhat-hyperplane), ghim revision và kiểm checksum khớp nguyên byte với file gốc tác giả. Script EXP-01 hiện có là hạ tầng chạy, chưa phải bằng chứng tái tạo. Script `smoke_baseline` chỉ là demo synthetic với mô hình SGD theo từng nhãn.
 
 ## Cài đặt và kiểm thử
 
@@ -38,12 +38,14 @@ Chi tiết về giao diện A/B/C nằm trong [integration-contracts.md](docs/in
 | Mục | So sánh hoặc phân tích | Tình trạng |
 | --- | --- | --- |
 | EXP-01 | MLHAT và BR+HAT trên Yeast | Có loader, config và runner; chưa có run báo cáo |
-| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Có nguồn HF đã ghim/checksum và runner; chưa có run W&B public |
+| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Đủ 18 run cục bộ; có bảng/hình; chưa có W&B public |
 | EXTRA-01 | Độ nhạy theo `kappa_alt = 100, 200, 500` trên SynHPGrad | Chưa chạy |
 
 Nhóm dùng thứ tự stream gốc, dự đoán trước khi học từng mẫu và báo example-based F1, Hamming loss, subset accuracy. Giao thức, seed, tham số, nguồn dữ liệu và giới hạn khi đối chiếu số liệu paper nằm trong [experiment-protocol.md](docs/experiment-protocol.md). Evaluator hiện tính trung bình toàn stream; paper dùng forgetting factor `0.995` và đánh giá mỗi 50 mẫu, nên chưa thể xem hai giá trị là cùng giao thức.
 
 Khi có run hợp lệ, README sẽ ghi ánh xạ **thí nghiệm → script/config → W&B run public → kết quả**, rồi đối chiếu các giá trị so sánh được với paper. Không dùng số của demo synthetic làm kết quả tái tạo.
+
+EXP-02 chạy bằng `python -u -m experiments.reproduce_exp2 --manifest data/manifests/hyperplane-hf.json --resume`, tổng hợp bằng `python -m experiments.report_exp2` (cài `.[plots]`). Run registry, JSON và bốn biểu đồ PNG ở `artifacts/exp2_hyperplane/` bị Git ignore. F1 toàn stream mean ± SD: MLHAT `0.184405 ± 0.000254` trên sudden và `0.121807 ± 0.000175` trên gradual; chưa có promote trong sáu run MLHAT bật drift. Cách đăng bằng chứng lên W&B sau khi đăng nhập nằm trong [hướng dẫn C](docs/member-c-exp2.md). Các kết quả này chưa đủ điều kiện đưa vào deck nộp mà thiếu citation W&B.
 
 ## Nhóm và bài nộp
 

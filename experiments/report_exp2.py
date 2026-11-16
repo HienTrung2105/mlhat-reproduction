@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 from pathlib import Path
 import statistics
 
@@ -49,9 +50,11 @@ def main() -> None:
                 run.summary.update({key: record['result'][key] for key in
                                     ('n_samples', 'example_f1', 'hamming_loss', 'subset_accuracy')})
                 run.summary['duration_seconds'] = record['duration_seconds_excluding_download']
-                for action in ('START_BACKGROUND', 'PROMOTE_BACKGROUND', 'DISCARD_BACKGROUND'):
-                    run.summary[action.lower()] = sum(
-                        e['action'] == action for e in record['result']['drift_events'])
+                run.summary['structural_events_instrumented'] = record['model'] != 'BR+HAT'
+                if record['model'] != 'BR+HAT':
+                    for action in ('START_BACKGROUND', 'PROMOTE_BACKGROUND', 'DISCARD_BACKGROUND'):
+                        run.summary[action.lower()] = sum(
+                            e['action'] == action for e in record['result']['drift_events'])
                 artifact = wandb.Artifact(f"exp2-{record['dataset']}-{record['model'].replace('+','-')}-seed{record['seed']}", type='experiment-evidence')
                 artifact.add_file(str(path), name='measurement.json')
                 artifact.add_file(str(snapshot), name='source_snapshot.zip')
@@ -71,6 +74,8 @@ def main() -> None:
             result = record['result']
             counts = [sum(e['action'] == action for e in result['drift_events']) for action in
                       ('START_BACKGROUND', 'PROMOTE_BACKGROUND', 'DISCARD_BACKGROUND')]
+            if record['model'] == 'BR+HAT':
+                counts = ['', '', '']  # River's internal actions are not instrumented here.
             writer.writerow([record['dataset'], record['model'], record['seed'], result['n_samples'],
                              result['example_f1'], result['hamming_loss'], result['subset_accuracy'],
                              record['duration_seconds_excluding_download'], *counts,
@@ -84,6 +89,9 @@ def main() -> None:
                 values = [r['result'][metric] for r in group]
                 writer.writerow([dataset, model, ','.join(str(r['seed']) for r in group), metric,
                                  statistics.mean(values), statistics.stdev(values) if len(values) > 1 else ''])
+    cache = directory / 'matplotlib-cache'
+    cache.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault('MPLCONFIGDIR', str(cache.resolve()))
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
