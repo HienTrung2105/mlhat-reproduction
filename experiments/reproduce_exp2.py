@@ -18,6 +18,7 @@ import sklearn
 
 from experiments.baselines import BinaryRelevanceHAT
 from experiments.exp2_data import DATASET_NAMES, load_hyperplane
+from experiments.exp2_evidence import series
 from mlhat.interfaces import OnlineMultiLabelClassifier, validate_sample
 from mlhat.tree import MLHATTree
 
@@ -144,25 +145,35 @@ def _git_dirty() -> bool:
 
 
 def _wandb_series(result: StreamResult) -> list[tuple[int, dict[str, float | int]]]:
-    """Merge F1 curves and cumulative drift counts into ordered W&B steps."""
-    points: dict[int, dict[str, float | int]] = {}
-    for point in result.rolling_f1:
-        points[int(point["sample_index"])] = {
-            "rolling_example_f1": float(point["example_f1"])
-        }
-    for point in result.faded_f1:
-        points.setdefault(int(point["sample_index"]), {})["faded_example_f1"] = float(
-            point["example_f1"]
-        )
-    counts = {"START_BACKGROUND": 0, "PROMOTE_BACKGROUND": 0, "DISCARD_BACKGROUND": 0}
-    for event in result.drift_events:
-        action = str(event["action"])
-        if action in counts:
-            counts[action] += 1
-            points.setdefault(int(event["sample_index"]), {}).update(
-                {f"drift_{key.lower()}": value for key, value in counts.items()}
-            )
-    return sorted(points.items())
+    """Adapt the shared saved-evidence series to the runner's W&B logging API."""
+    return [(row["sample_index"], {key: value for key, value in row.items() if key != "sample_index"})
+            for row in series({"result": asdict(result)})]
+
+
+def completed_output(path: Path, config: dict, checksum: str, commit: str, *, resume: bool, wandb: bool) -> bool:
+    """Skip a matching completed run or refuse to overwrite any existing measurement.
+
+    Args:
+        path: Proposed output JSON path.
+        config: Requested experiment config.
+        checksum: Pinned dataset checksum.
+        commit: Current source revision.
+        resume: Whether identical completed output may be reused.
+        wandb: Whether the caller requires a previously logged W&B run.
+
+    Returns:
+        True for an identical completed run, False for a new path; raises on collision.
+    """
+    if not path.exists():
+        return False
+    if resume:
+        previous = json.loads(path.read_text(encoding="utf-8"))
+        if (previous.get("git_commit") == commit and previous.get("config") == config
+            and previous.get("dataset_sha256") == checksum
+            and previous.get("result", {}).get("n_samples") == 50000
+            and (not wandb or previous.get("wandb_url"))):
+            return True
+    raise FileExistsError(f"Refusing to overwrite {path}; select a fresh --output-dir. Upload old results with report_exp2 --upload.")
 
 
 def main() -> None:
@@ -173,6 +184,7 @@ def main() -> None:
     parser.add_argument("--dataset", choices=DATASET_NAMES)
     parser.add_argument("--model", choices=MODEL_NAMES)
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--output-dir", type=Path, default=Path("artifacts/exp2_hyperplane"))
     parser.add_argument("--wandb", action="store_true")
     parser.add_argument("--wandb-project", default="mlhat-team10-exp2")
     parser.add_argument("--resume", action="store_true", help="Skip complete results matching commit, source and config")
@@ -194,24 +206,33 @@ def main() -> None:
     models = (args.model,) if args.model else MODEL_NAMES
     seeds = (args.seed,) if args.seed is not None else tuple(config["seeds"])
     commit = _commit()
-
+    # Check every collision before a dataset download or model construction.
+    skipped = set()
     for dataset_name in datasets:
         if dataset_name not in manifest["datasets"]:
-            raise ValueError(f"Manifest has no verified entry for {dataset_name}")
+            parser.error(f"Manifest has no verified entry for {dataset_name}")
+        for seed in seeds:
+            for model_name in models:
+                path = args.output_dir / f"{dataset_name}_{model_name}_seed{seed}.json"
+                try:
+                    if completed_output(path, config, manifest["datasets"][dataset_name]["sha256"], commit,
+                                        resume=args.resume, wandb=args.wandb):
+                        skipped.add((dataset_name, model_name, seed))
+                except (ValueError, FileExistsError) as exc:
+                    parser.error(str(exc))
+
+    for dataset_name in datasets:
+        if all((dataset_name, model_name, seed) in skipped for seed in seeds for model_name in models):
+            print(f"Already complete: {dataset_name}", flush=True)
+            continue
         source = manifest["datasets"][dataset_name]
         X, Y, digest = load_hyperplane(dataset_name, source)
         for seed in seeds:
             for model_name in models:
-                output = Path("artifacts/exp2_hyperplane") / f"{dataset_name}_{model_name}_seed{seed}.json"
-                if args.resume and output.exists():
-                    previous = json.loads(output.read_text(encoding="utf-8"))
-                    if (previous.get("git_commit") == commit
-                        and previous.get("config") == config
-                        and previous.get("dataset_sha256") == digest
-                        and previous.get("result", {}).get("n_samples") == len(X)
-                        and (not args.wandb or previous.get("wandb_url"))):
-                        print(f"Already complete: {output}", flush=True)
-                        continue
+                output = args.output_dir / f"{dataset_name}_{model_name}_seed{seed}.json"
+                if (dataset_name, model_name, seed) in skipped:
+                    print(f"Already complete: {output}", flush=True)
+                    continue
                 print(f"Starting {dataset_name} {model_name} seed={seed}", flush=True)
                 model = _model(model_name, config, seed)
                 start = time.perf_counter()
@@ -248,9 +269,9 @@ def main() -> None:
                     "duration_seconds_excluding_download": duration,
                     "result": asdict(result),
                 }
-                output = Path("artifacts/exp2_hyperplane") / f"{dataset_name}_{model_name}_seed{seed}.json"
                 output.parent.mkdir(parents=True, exist_ok=True)
-                output.write_text(json.dumps(record, indent=2), encoding="utf-8")
+                with output.open("x", encoding="utf-8") as stream:
+                    stream.write(json.dumps(record, indent=2))
                 print(f"{dataset_name} {model_name} seed={seed}: F1={result.example_f1:.4f}; {output}")
                 if args.wandb:
                     import wandb

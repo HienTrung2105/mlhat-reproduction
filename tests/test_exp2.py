@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from experiments import exp2_data
-from experiments.reproduce_exp2 import _model, _wandb_series, evaluate_stream
+from experiments.reproduce_exp2 import _model, _wandb_series, completed_output, evaluate_stream
 from mlhat.drift import DriftAction
 from mlhat.tree import DriftEvent
 
@@ -109,3 +109,34 @@ def test_exp2_all_three_model_variants_accept_the_same_ordered_stream() -> None:
         assert result.n_samples == 6
         assert len(result.rolling_f1) == 2
         assert len(result.faded_f1) == 3
+
+
+def test_existing_measurement_is_never_overwritten(tmp_path) -> None:
+    path = tmp_path / 'run.json'
+    config = {'experiment': 'EXP-02'}
+    assert not completed_output(path, config, 'digest', 'revision', resume=False, wandb=False)
+    path.write_text(json.dumps({'git_commit': 'revision', 'config': config,
+                               'dataset_sha256': 'digest', 'result': {'n_samples': 50000}}))
+    before = path.read_bytes()
+    assert completed_output(path, config, 'digest', 'revision', resume=True, wandb=False)
+    for resume, commit in ((False, 'revision'), (True, 'different-revision')):
+        with pytest.raises(FileExistsError, match='Refusing to overwrite'):
+            completed_output(path, config, 'digest', commit, resume=resume, wandb=False)
+    assert path.read_bytes() == before
+
+
+def test_runner_checks_collisions_before_download_or_training(tmp_path, monkeypatch) -> None:
+    from experiments import reproduce_exp2
+
+    config = Path(__file__).parents[1] / 'configs/exp2_hyperplane.json'
+    manifest = Path(__file__).parents[1] / 'data/manifests/hyperplane-hf.json'
+    (tmp_path / 'SynHPSud_MLHAT_seed1.json').write_text('{}')
+    monkeypatch.setattr(sys, 'argv', ['reproduce_exp2', '--config', str(config), '--manifest', str(manifest),
+                                    '--output-dir', str(tmp_path)])
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Must not download or create a model for existing output')
+    monkeypatch.setattr(reproduce_exp2, 'load_hyperplane', forbidden)
+    monkeypatch.setattr(reproduce_exp2, '_model', forbidden)
+    with pytest.raises(SystemExit) as error:
+        reproduce_exp2.main()
+    assert error.value.code == 2

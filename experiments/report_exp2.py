@@ -1,119 +1,155 @@
-"""Summarize completed EXP-02 runs and optionally publish saved evidence to W&B."""
+"""Validate/report saved EXP-02 evidence; train nothing and upload only explicitly."""
 
 import argparse
 import csv
-import hashlib
 import json
 import os
 from pathlib import Path
-import statistics
 
-from experiments.reproduce_exp2 import StreamResult, _wandb_series
+from experiments.exp2_evidence import (
+    ACTIONS, CURVES, METRICS, PROJECT, TEAM, curve_means, digest_file,
+    load_evidence, summarize,
+)
+from experiments.exp2_upload import load_upload_ledger, upload_plan, upload_records
+
+
+def write_csv(path: Path, rows: list[dict]) -> None:
+    """Write report rows with their declared field order; return None."""
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def check_summary(records: list[dict], rows: list[dict]) -> None:
+    """Cross-check means/sample SD against independent NumPy calculations."""
+    import numpy as np
+
+    for row in rows:
+        values = [record["result"][row["metric"]] for record in records
+                  if (record["dataset"], record["model"]) == (row["dataset"], row["model"])]
+        if not np.allclose([row["mean"], row["sample_sd"]],
+                           [np.mean(values), np.std(values, ddof=1)], rtol=1e-12, atol=1e-14):
+            raise ValueError("Independent mean/sample SD check failed")
+
+
+def export_plots(output: Path, records: list[dict]) -> None:
+    """Render saved curves using one plotting path for seed means and individual runs.
+
+    Args:
+        output: Separate report directory, never the original evidence directory.
+        records: Validated records, with aligned sample grids.
+
+    Returns:
+        None. Writes four mean PNG/CSV pairs, 36 per-run PNGs, and a hash manifest.
+    """
+    cache = output / "matplotlib-cache"
+    cache.mkdir(exist_ok=True)
+    os.environ.setdefault("MPLCONFIGDIR", str(cache.resolve()))
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    positions = records[0]["config"]["drift_positions_one_based"]
+
+    def render(path: Path, title: str, curve: str, lines: list[tuple[str, list[dict]]]) -> None:
+        fig, ax = plt.subplots(figsize=(10, 4.5), layout="constrained")
+        for label, points in lines:
+            ax.plot([p["sample_index"] for p in points], [p["example_f1"] for p in points], label=label)
+        for position in positions:
+            ax.axvline(position, color="gray", linestyle="--", linewidth=0.8)
+        definition = "window 1000; step 250" if curve == "rolling_f1" else "fading alpha=0.995; step 50"
+        ax.set(title=f"{title}: {definition}", xlabel="Samples processed (one-based)",
+               ylabel="Example F1", ylim=(0, 1))
+        ax.legend()
+        fig.savefig(path, dpi=180)
+        plt.close(fig)
+
+    for dataset in sorted({r["dataset"] for r in records}):
+        for curve in CURVES:
+            lines, rows = [], []
+            for model in sorted({r["model"] for r in records}):
+                points = curve_means(records, dataset, model, curve)
+                lines.append((f"{model} (3 seeds)", points))
+                rows.extend({"model": model, **point} for point in points)
+            path = output / f"{dataset}_{curve}.png"
+            render(path, dataset, curve, lines)
+            write_csv(path.with_suffix(".csv"), rows)
+    run_plots = output / "run_plots"
+    run_plots.mkdir(exist_ok=True)
+    for record in records:
+        for curve in CURVES:
+            path = run_plots / f"{record['dataset']}_{record['model']}_seed{record['seed']}_{curve}.png"
+            render(path, f"{record['dataset']} / seed {record['seed']}", curve,
+                   [(record["model"], record["result"][curve])])
+    files = [*output.glob("*.png"), *output.glob("*_f1.csv"), *run_plots.glob("*.png")]
+    manifest = {path.relative_to(output).as_posix(): digest_file(path) for path in sorted(files)}
+    (output / "plot_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+
+def export_registry(output: Path, pairs: list[tuple[Path, dict]], audit: dict, ledger: dict) -> None:
+    """Write run metrics/events and only measurement-matched URLs; leave baseline counts unknown."""
+    rows = []
+    for path, record in pairs:
+        result = record["result"]
+        row = {key: record[key] for key in ("dataset", "model", "seed")}
+        row.update({key: result[key] for key in ("n_samples", *METRICS)})
+        row["seconds"] = record["duration_seconds_excluding_download"]
+        row.update({action.lower(): sum(e["action"] == action for e in result["drift_events"])
+                    if record["model"] != "BR+HAT" else "" for action in ACTIONS})
+        entry = ledger["runs"].get(path.name, {})
+        row["wandb_url"] = entry.get("url", "") if entry.get("measurement_sha256") == audit["measurement_sha256"][path.name] else ""
+        row["git_dirty"] = record["git_dirty"]
+        rows.append(row)
+    write_csv(output / "run_registry.csv", rows)
 
 
 def main() -> None:
-    """Write seed summaries and curves, or upload measured records to a common project.
-
-    Args:
-        CLI options select the result directory and optional W&B destination.
-
-    Returns:
-        None. Writes summary CSV, PNG curves and updated records containing run URLs.
-    """
+    """Validate the completed batch and write derived reports outside its evidence directory."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--directory', default='artifacts/exp2_hyperplane')
-    parser.add_argument('--wandb-project')
-    parser.add_argument('--wandb-entity')
+    parser.add_argument("--directory", type=Path, default=Path("artifacts/exp2_hyperplane"), help="Read-only evidence input")
+    parser.add_argument("--output-dir", type=Path, default=Path("artifacts/exp2_reports"), help="New derived reports/upload state")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--validate-only", action="store_true", help="Validate without plotting or network access")
+    mode.add_argument("--plan-upload", action="store_true", help="List stable IDs and recorded upload state; no network")
+    mode.add_argument("--upload", action="store_true", help="Explicitly upload missing evidence to W&B; never train")
+    parser.add_argument("--wandb-project", choices=[PROJECT], default=PROJECT)
+    parser.add_argument("--wandb-entity", choices=[TEAM], default=TEAM)
     args = parser.parse_args()
-    directory = Path(args.directory)
-    records = []
-    for path in sorted(directory.glob('*_seed*.json')):
-        record = json.loads(path.read_text(encoding='utf-8'))
-        if record['result']['n_samples'] != 50000:
-            raise ValueError(f'Incomplete stream: {path}')
-        if args.wandb_project and not record.get('wandb_url'):
+    evidence = args.directory.resolve()
+    output = args.output_dir.resolve()
+    if output == evidence or evidence in output.parents or output in evidence.parents:
+        parser.error("--output-dir must be separate from the original evidence directory")
+    pairs, audit = load_evidence(evidence)
+    records = [record for _, record in pairs]
+    summaries = summarize(records)
+    check_summary(records, summaries)
+    audit["statistics_check"] = "all means and sample SD match NumPy ddof=1"
+    audit["target"] = {"entity": TEAM, "project": PROJECT}
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "validation.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
+    ledger = load_upload_ledger(evidence, output)
+    write_csv(output / "summary.csv", summaries)
+    if args.plan_upload:
+        plan = upload_plan(pairs, audit, ledger)
+        (output / "upload_plan.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
+        print(f"Local plan: {len(plan)} stable IDs; {sum(r['recorded_finished'] for r in plan)} already recorded Finished. No network/upload.")
+    elif not args.validate_only:
+        export_plots(output, records)
+        if args.upload:
+            import tempfile
+            temporary = output / "wandb-temp"
+            temporary.mkdir(exist_ok=True)
+            tempfile.tempdir = str(temporary)
             import wandb
-
-            snapshot = directory / 'source_snapshot.zip'
-            if not snapshot.exists():
-                raise ValueError('Missing source_snapshot.zip for measured source provenance')
-            with wandb.init(
-                project=args.wandb_project, entity=args.wandb_entity,
-                name=f"EXP-02-{record['dataset']}-{record['model']}-seed-{record['seed']}",
-                job_type='reproduction',
-                config={**{k: v for k, v in record.items() if k != 'result'},
-                        'logging_mode': 'upload_completed_local_measurement',
-                        'source_snapshot_sha256': hashlib.sha256(snapshot.read_bytes()).hexdigest()},
-            ) as run:
-                for step, values in _wandb_series(StreamResult(**record['result'])):
-                    run.log(values, step=step)
-                run.summary.update({key: record['result'][key] for key in
-                                    ('n_samples', 'example_f1', 'hamming_loss', 'subset_accuracy')})
-                run.summary['duration_seconds'] = record['duration_seconds_excluding_download']
-                run.summary['structural_events_instrumented'] = record['model'] != 'BR+HAT'
-                if record['model'] != 'BR+HAT':
-                    for action in ('START_BACKGROUND', 'PROMOTE_BACKGROUND', 'DISCARD_BACKGROUND'):
-                        run.summary[action.lower()] = sum(
-                            e['action'] == action for e in record['result']['drift_events'])
-                artifact = wandb.Artifact(f"exp2-{record['dataset']}-{record['model'].replace('+','-')}-seed{record['seed']}", type='experiment-evidence')
-                artifact.add_file(str(path), name='measurement.json')
-                artifact.add_file(str(snapshot), name='source_snapshot.zip')
-                run.log_artifact(artifact)
-                record['wandb_url'] = run.url
-            path.write_text(json.dumps(record, indent=2), encoding='utf-8')
-        records.append(record)
-    if not records:
-        raise SystemExit('No completed EXP-02 measurements yet')
-    groups = sorted({(r['dataset'], r['model']) for r in records})
-    with (directory / 'run_registry.csv').open('w', newline='', encoding='utf-8') as stream:
-        writer = csv.writer(stream)
-        writer.writerow(['dataset', 'model', 'seed', 'n_samples', 'example_f1', 'hamming_loss',
-                         'subset_accuracy', 'seconds', 'start_background', 'promote_background',
-                         'discard_background', 'wandb_url', 'git_dirty'])
-        for record in records:
-            result = record['result']
-            counts = [sum(e['action'] == action for e in result['drift_events']) for action in
-                      ('START_BACKGROUND', 'PROMOTE_BACKGROUND', 'DISCARD_BACKGROUND')]
-            if record['model'] == 'BR+HAT':
-                counts = ['', '', '']  # River's internal actions are not instrumented here.
-            writer.writerow([record['dataset'], record['model'], record['seed'], result['n_samples'],
-                             result['example_f1'], result['hamming_loss'], result['subset_accuracy'],
-                             record['duration_seconds_excluding_download'], *counts,
-                             record.get('wandb_url', ''), record.get('git_dirty')])
-    with (directory / 'summary.csv').open('w', newline='', encoding='utf-8') as stream:
-        writer = csv.writer(stream)
-        writer.writerow(['dataset', 'model', 'completed_seeds', 'metric', 'mean', 'sample_sd'])
-        for dataset, model in groups:
-            group = [r for r in records if (r['dataset'], r['model']) == (dataset, model)]
-            for metric in ('example_f1', 'hamming_loss', 'subset_accuracy'):
-                values = [r['result'][metric] for r in group]
-                writer.writerow([dataset, model, ','.join(str(r['seed']) for r in group), metric,
-                                 statistics.mean(values), statistics.stdev(values) if len(values) > 1 else ''])
-    cache = directory / 'matplotlib-cache'
-    cache.mkdir(parents=True, exist_ok=True)
-    os.environ.setdefault('MPLCONFIGDIR', str(cache.resolve()))
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    for dataset in sorted({r['dataset'] for r in records}):
-        for curve in ('rolling_f1', 'faded_f1'):
-            fig, ax = plt.subplots(figsize=(10, 4.5), layout='constrained')
-            for model in sorted({r['model'] for r in records if r['dataset'] == dataset}):
-                group = [r for r in records if (r['dataset'], r['model']) == (dataset, model)]
-                points = group[0]['result'][curve]
-                xs = [p['sample_index'] for p in points]
-                ys = [statistics.mean(r['result'][curve][i]['example_f1'] for r in group) for i in range(len(xs))]
-                ax.plot(xs, ys, label=f'{model} (n={len(group)} seeds)')
-            for position in (12500, 25000, 37500):
-                ax.axvline(position, color='gray', linestyle='--', linewidth=0.8)
-            definition = 'window 1000; step 250' if curve == 'rolling_f1' else 'fading alpha=0.995; step 50'
-            ax.set(title=f'{dataset}: {definition}', xlabel='Samples processed (one-based)', ylabel='Example F1', ylim=(0, 1))
-            ax.legend()
-            fig.savefig(directory / f'{dataset}_{curve}.png', dpi=180)
-            plt.close(fig)
-    print(f'Summarized {len(records)}/18 completed runs in {directory}')
+            if not wandb.login(relogin=False):
+                parser.error("Run python -m wandb login in your terminal first")
+            ledger = upload_records(evidence, pairs, audit, wandb, wandb.Api(timeout=60), reports_dir=output)
+    export_registry(output, pairs, audit, ledger)
+    if any(digest_file(path) != audit["measurement_sha256"][path.name] for path, _ in pairs):
+        raise RuntimeError("Original measurement JSON changed during reporting")
+    print(f"Validated 18/18 completed runs. Read-only evidence: {evidence}; reports: {output}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
