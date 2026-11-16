@@ -8,7 +8,11 @@ B chủ trì, A kiểm tra cây và C đối chiếu baseline. Chạy MLHAT nhó
 
 ## EXP-02 — Drift đột ngột và gradual
 
-C chủ trì, B xác thực dữ liệu và A rà thao tác thay cây con. Chạy MLHAT, BR+HAT và MLHAT tắt drift trên **SynHPSud** và **SynHPGrad**. Mỗi stream có 50.000 mẫu, 30 đặc trưng số và 8 nhãn. Độ rộng drift lần lượt là 1 và 500. Đối chiếu §4.5, Table 4 và Figure 6(e–f). Giữ thứ tự nguồn, đánh dấu các mốc 12.500, 25.000 và 37.500 theo quy ước của paper, ghi rõ chỉ số bắt đầu từ đâu. Vẽ F1 theo cửa sổ 1.000 mẫu, ghi một điểm mỗi 250 mẫu theo quy ước của nhóm. Log riêng cảnh báo, promote và discard. Biến thể tắt drift giữ split, leaf, bootstrap và seed, đồng thời tắt detector và nhánh nền.
+C chủ trì với B xác thực dữ liệu và A rà thao tác thay cây. MLHAT, BR+HAT và MLHAT tắt drift chạy trên SynHPSud/SynHPGrad: 50.000 mẫu/stream, 30 feature số, 8 nhãn; width lần lượt 1 và 500. Predict → metric → learn, thứ tự gốc, seed 1/2/3; mốc drift một-based 12.500/25.000/37.500. Theo dõi cảnh báo/mở, promote và discard; ablation giữ các thành phần còn lại.
+
+Curve nhóm: cửa sổ 1.000 mẫu/điểm mỗi 250 mẫu; bổ sung fading alpha=0.995 theo từng mẫu/điểm mỗi 50 mẫu. Chưa xác minh phép tổng hợp fading trùng evaluator tác giả, không lấy hai loại metric khác nhau để tính relative deviation. Tham chiếu §4.5, Table 4 và Figure 6(e–f) của paper.
+
+Đã hoàn tất 18 run và kiểm tra W&B Public. [Báo cáo EXP-02 chính](exp2-results.md) giữ toàn bộ nguồn HF/commit/checksum, config, kết quả mean ± SD, 18 URL, kiểm chứng public, lệnh tái lập/upload và giới hạn khoa học. Các file gốc và snapshot được bảo toàn; báo cáo dẫn xuất mới ghi ra `artifacts/exp2_reports/`, không ghi đè batch `artifacts/exp2_hyperplane/`.
 
 ## EXTRA-01 — Độ nhạy với kappa_alt
 

@@ -6,7 +6,7 @@ Nhóm 10 đang tự triển khai phương pháp **Multi-Label Hoeffding Adaptive
 
 Repo đã có cây chính và phép chia trên đặc trưng số, bộ dự đoán nhiều nhãn tại lá, cơ chế phát hiện drift và cây con dự phòng, bộ tải Yeast, baseline BR+HAT và vòng đánh giá test-then-train. Phần drift đã qua kiểm thử trên các tình huống nhỏ nhưng còn những [giả định cần nhóm rà lại](docs/decisions.md) trước khi dùng để kết luận về MLHAT.
 
-**Chưa có run tái tạo được xác thực hoặc W&B run công khai.** Yeast đã được ghim phiên bản và checksum; nguồn cho SynHPSud và SynHPGrad chưa được ghim. Script EXP-01 hiện có là hạ tầng chạy, chưa phải bằng chứng tái tạo. Script `smoke_baseline` chỉ là demo synthetic với mô hình SGD theo từng nhãn.
+**EXP-02: đủ 18 run thật (hai stream × ba mô hình × ba seed), đã upload W&B Public.** Xem [báo cáo chính](docs/exp2-results.md) cho protocol, số liệu, audit public, cách chạy và việc còn thiếu. Còn xác minh evaluator/code gốc và phân tích sai lệch trước khi kết luận tái tạo thành công. Dữ liệu HF được ghim revision/checksum trong `data/manifests/`. `smoke_baseline` là demo SGD synthetic, không phải EXP-02.
 
 ## Cài đặt và kiểm thử
 
@@ -28,7 +28,7 @@ Lệnh cuối chỉ kiểm tra pipeline demo. Khi cần dữ liệu Hugging Face
 | Drift | [`drift.py`](src/mlhat/drift.py) | ADWIN, so lỗi hai cây và quyết định mở, thay hoặc bỏ cây con dự phòng |
 | Dự đoán tại lá | [`leaves.py`](src/mlhat/leaves.py) | Label Powerset + kNN; Binary Relevance + bagging Logistic Regression |
 | Dữ liệu và đánh giá | [`data.py`](src/mlhat/data.py), [`evaluation.py`](src/mlhat/evaluation.py) | Tải Yeast, kiểm tra schema, dự đoán trước khi học và tính metric |
-| Thí nghiệm | [`experiments/`](experiments/), [`configs/`](configs/) | Baseline BR+HAT, cấu hình và script EXP-01 |
+| Thí nghiệm | [`experiments/`](experiments/), [`configs/`](configs/) | Baseline BR+HAT, runner EXP-01/EXP-02 và báo cáo/upload EXP-02 |
 | Kiểm thử | [`tests/`](tests/) | Kiểm tra giao diện, metric, ADWIN và vòng đời cây con dự phòng |
 
 Chi tiết về giao diện A/B/C nằm trong [integration-contracts.md](docs/integration-contracts.md). Những chỗ paper chưa rõ và lựa chọn triển khai cần xác nhận được ghi trong [decisions.md](docs/decisions.md).
@@ -38,12 +38,27 @@ Chi tiết về giao diện A/B/C nằm trong [integration-contracts.md](docs/in
 | Mục | So sánh hoặc phân tích | Tình trạng |
 | --- | --- | --- |
 | EXP-01 | MLHAT và BR+HAT trên Yeast | Có loader, config và runner; chưa có run báo cáo |
-| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Chưa ghim nguồn stream và chưa có runner |
+| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Đủ 18 run Finished; config/metric/hình đã kiểm tra public; còn đối chiếu mã gốc |
 | EXTRA-01 | Độ nhạy theo `kappa_alt = 100, 200, 500` trên SynHPGrad | Chưa chạy |
 
-Nhóm dùng thứ tự stream gốc, dự đoán trước khi học từng mẫu và báo example-based F1, Hamming loss, subset accuracy. Giao thức, seed, tham số, nguồn dữ liệu và giới hạn khi đối chiếu số liệu paper nằm trong [experiment-protocol.md](docs/experiment-protocol.md). Evaluator hiện tính trung bình toàn stream; paper dùng forgetting factor `0.995` và đánh giá mỗi 50 mẫu, nên chưa thể xem hai giá trị là cùng giao thức.
+Nhóm dùng thứ tự stream gốc và predict → metric → learn. Metric tổng kết là trung bình cả stream; curve EXP-02 có rolling và fading riêng, chưa xác minh cùng phép tổng hợp với paper. Tham số và giới hạn nằm trong [protocol chung](docs/experiment-protocol.md), [báo cáo EXP-02](docs/exp2-results.md) và [quyết định cần review](docs/decisions.md).
 
-Khi có run hợp lệ, README sẽ ghi ánh xạ **thí nghiệm → script/config → W&B run public → kết quả**, rồi đối chiếu các giá trị so sánh được với paper. Không dùng số của demo synthetic làm kết quả tái tạo.
+Kiểm tra/xuất báo cáo từ **batch đã có**, không train hoặc upload:
+
+```powershell
+python -m pip install -e ".[dev,online,data,tracking,plots]"
+python -m experiments.report_exp2 --validate-only
+python -m experiments.report_exp2
+python -m experiments.report_exp2 --plan-upload
+```
+
+Input bằng chứng `artifacts/exp2_hyperplane/` được giữ nguyên; đầu ra dẫn xuất ở `artifacts/exp2_reports/`. Dữ liệu tải/cache và outputs đều bị Git ignore. Tái chạy một đợt mới phải chọn output mới:
+
+```powershell
+python -u -m experiments.reproduce_exp2 --manifest data/manifests/hyperplane-hf.json --output-dir artifacts/exp2_rerun
+```
+
+Lệnh này chỉ dùng khi chủ động muốn train lại. Runner từ chối ghi đè JSON đã có; `--resume` chỉ skip đúng commit/config/checksum, không phải lệnh upload. Batch 18 run hiện đã public; xem báo cáo chính cho lệnh W&B và cách nhận diện run ID cố định. Không cần upload lại để tạo bằng chứng.
 
 ## Nhóm và bài nộp
 
@@ -62,3 +77,16 @@ Mỗi phần việc nên ở một nhánh để thành viên khác review trư�
 Code MLHAT của nhóm dựa trên mô tả và công thức trong [paper](https://arxiv.org/html/2410.20242v1). [Repo tác giả](https://github.com/aestebant/mlhat) chỉ dùng để kiểm chứng và đối chiếu độc lập; nhóm không sao chép code lõi.
 
 Repo dùng NumPy và scikit-learn cho hạ tầng; River 0.26.1 cung cấp ADWIN, các bộ học ở lá và baseline BR+HAT. Hugging Face datasets dùng để tải dữ liệu bằng code, còn W&B dùng để lưu bằng chứng run khi thí nghiệm được thực hiện.
+
+## EXP-02: script/config → W&B runs
+
+[Project public](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2). Script đo: `experiments/reproduce_exp2.py`; config: `configs/exp2_hyperplane.json`; uploader: `experiments/report_exp2.py --upload`. Tất cả 18 run Finished đã đối chiếu config/metrics/ảnh/bảng. Bảng là Example F1 mean ± SD mẫu qua ba seed; phần so với paper vẫn cần xác minh giao thức.
+
+| Dataset | Model | Seed 1 | Seed 2 | Seed 3 | Example F1 |
+| --- | --- | --- | --- | --- | --- |
+| SynHPSud | MLHAT | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2c83ed081d41cb0fb) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2aac5e879609efb7e) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2bd953105936de12f) | 0.184405 ± 0.000254 |
+| SynHPSud | BR+HAT | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2c9a24d42f57ad173) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp280a2ce2de88730a1) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2a21738073805368b) | 0.173472 ± 0.005833 |
+| SynHPSud | MLHAT-no-drift | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2175bed53ee351153) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2d2df3fd1d2c56694) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp204287f774ab08ca5) | 0.184651 ± 0.000169 |
+| SynHPGrad | MLHAT | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2830df16218a63401) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2cb829f55bf517e90) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp26e278b8c0356113a) | 0.121807 ± 0.000175 |
+| SynHPGrad | BR+HAT | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp27528bfc743bd8336) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp22e3847a7d4a9630d) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2d5742212f6d5001f) | 0.116550 ± 0.012620 |
+| SynHPGrad | MLHAT-no-drift | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2da20c25df6e0577d) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2eb47fc013fa2e81e) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp2/runs/exp2c636191998a5e176) | 0.121401 ± 0.000405 |

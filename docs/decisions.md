@@ -23,7 +23,8 @@ Chi tiết chạy nằm trong [experiment-protocol.md](experiment-protocol.md). 
 ## Điều kiện còn phụ thuộc nguồn bên ngoài
 
 - Đại diện nhóm điền hai hạn Moodle từ thông báo chính thức. Kế hoạch nội bộ dùng mốc tương đối trong [timeline.md](timeline.md).
-- B và C ghi ID, revision và giấy phép của bản Hugging Face/Kaggle trước khi chạy. Dataset chuẩn đã được chọn. Nếu nguồn hiện có thiếu quyền phân phối lại, dùng nguồn được môn chấp nhận sau khi có căn cứ về quyền sử dụng.
+- B và C ghi ID, revision và giấy phép của bản Hugging Face/Kaggle trước khi chạy. Dataset chuẩn đã được chọn. Hướng dẫn môn do nhóm cung cấp yêu cầu tự đăng dataset lên HF/Kaggle khi không có bản công khai phù hợp. Hai file ARFF gốc của tác giả đã được xác minh tại commit và checksum trong [hyperplane-reference.json](../data/manifests/hyperplane-reference.json); bản HF public của C đã ghim tại [hyperplane-hf.json](../data/manifests/hyperplane-hf.json), revision 7171b3ab7dc6b33aeea2723174f5ff9c32dc026f, checksum đã kiểm từ file tải qua HF.
+- Hướng dẫn môn yêu cầu chạy mã gốc tác giả để so output độc lập với implementation nhóm. Đây là điều kiện bằng chứng, chưa có run gốc đã ghi lại.
 - Giấy phép mã nhóm cần sự đồng ý của các đồng tác giả trước khi thêm LICENSE. Giấy phép dữ liệu được quản lý riêng.
 
 ## Điểm implementation C cần nhóm rà, chưa phải quyết định khoa học đã chốt

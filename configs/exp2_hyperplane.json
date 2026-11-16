@@ -1,0 +1,47 @@
+{
+  "experiment": "EXP-02",
+  "datasets": ["SynHPSud", "SynHPGrad"],
+  "models": ["MLHAT", "BR+HAT", "MLHAT-no-drift"],
+  "seeds": [1, 2, 3],
+  "protocol": "test_then_train_source_order",
+  "drift_positions_one_based": [12500, 25000, 37500],
+  "rolling_f1_window": 1000,
+  "rolling_f1_step": 250,
+  "fading_factor": 0.995,
+  "fading_step": 50,
+  "baseline": {
+    "name": "BR+HAT",
+    "river_version": "0.26.1",
+    "n_models": 8,
+    "grace_period": 200,
+    "delta": 0.00001,
+    "tau": 0.05,
+    "split_criterion": "info_gain",
+    "leaf_prediction": "nba",
+    "nb_threshold": 0,
+    "splitter": "GaussianSplitter",
+    "drift_detector": "ADWIN",
+    "drift_window_threshold": 50,
+    "switch_significance": 0.05,
+    "bootstrap_sampling": true,
+    "prediction_threshold": 0.5
+  },
+  "mlhat": {
+    "delta_spl": 1e-7,
+    "kappa_spl": 200,
+    "delta_alt": 0.05,
+    "kappa_alt": 200,
+    "adwin_delta": 0.002,
+    "drift_enabled": true,
+    "eta": 750,
+    "lambda": 1,
+    "drift_metric": "hamming_loss",
+    "prediction_threshold": 0.5,
+    "low_leaf": {"method": "label_powerset_knn", "n_neighbors": 5},
+    "high_leaf": {
+      "method": "binary_relevance_bagging_logistic_regression",
+      "n_estimators": 10
+    },
+    "numeric_splitter": {"n_bins": 10}
+  }
+}

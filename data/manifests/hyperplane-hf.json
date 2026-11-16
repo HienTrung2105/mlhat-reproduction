@@ -1,0 +1,18 @@
+{
+  "datasets": {
+    "SynHPSud": {
+      "repo_id": "hanggio2105/mlhat-hyperplane",
+      "file": "SynHPSud.arff",
+      "revision": "7171b3ab7dc6b33aeea2723174f5ff9c32dc026f",
+      "sha256": "1325c884f50407883866b7d595260e10e66b4907823b74ab0485ef4679f7033a",
+      "label_location": "start"
+    },
+    "SynHPGrad": {
+      "repo_id": "hanggio2105/mlhat-hyperplane",
+      "file": "SynHPGrad.arff",
+      "revision": "7171b3ab7dc6b33aeea2723174f5ff9c32dc026f",
+      "sha256": "6e0d503f8bf896647656bc2c4c8d194ee90398a9cbc90515618582b5e953fb6e",
+      "label_location": "start"
+    }
+  }
+}

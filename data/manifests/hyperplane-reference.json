@@ -1,0 +1,27 @@
+{
+  "author_repo": "aestebant/mlhat",
+  "author_revision": "8578941fcae1f9d55e95d6bc41b771a171a9c48d",
+  "author_license": "CC0-1.0",
+  "datasets": {
+    "SynHPSud": {
+      "author_file": "synthdata/SynHPSud.arff",
+      "author_sha256": "1325c884f50407883866b7d595260e10e66b4907823b74ab0485ef4679f7033a",
+      "rows": 50000,
+      "features": 30,
+      "labels": 8,
+      "label_location": "start",
+      "drift_type": "sudden",
+      "drift_width": 1
+    },
+    "SynHPGrad": {
+      "author_file": "synthdata/SynHPGrad.arff",
+      "author_sha256": "6e0d503f8bf896647656bc2c4c8d194ee90398a9cbc90515618582b5e953fb6e",
+      "rows": 50000,
+      "features": 30,
+      "labels": 8,
+      "label_location": "start",
+      "drift_type": "gradual",
+      "drift_width": 500
+    }
+  }
+}
