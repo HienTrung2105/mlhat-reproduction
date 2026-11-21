@@ -6,7 +6,7 @@ Quy tắc làm việc cho coding agent trong repo này. Đọc [README.md](READM
 
 - Nhóm 3 sinh viên môn Nhập môn Máy học đã chọn bài báo *Hoeffding adaptive trees for multi-label classification on data streams* (Esteban et al., 2024): [paper](https://arxiv.org/abs/2410.20242), [DOI](https://doi.org/10.1016/j.knosys.2024.112561).
 - Mục tiêu: hiểu và tự triển khai đóng góp MLHAT, tái tạo một phần thí nghiệm, định lượng và giải thích sai lệch so với paper.
-- **Trạng thái hiện tại:** repo có hạ tầng đánh giá và baseline demo synthetic; chưa có MLHAT hoàn chỉnh hay run tái tạo. [Quyết định nhóm](docs/decisions.md) đã ghi mã **10**, phân công A/B/C và phạm vi Core. Nguồn dataset chưa ghim; hạn trong [timeline](docs/timeline.md) cần đối chiếu Moodle.
+- **Trạng thái hiện tại:** nhóm 10 có 6 run EXP-01 và 18 run EXP-02 công khai, với nguồn dữ liệu đã ghim revision và checksum. Midterm dùng ablation bật/tắt drift từ EXP-02 làm phân tích bổ sung. Xem [README](README.md) và [quyết định nhóm](docs/decisions.md) để tra bằng chứng và phạm vi. Hạn trong [timeline](docs/timeline.md) cần đối chiếu Moodle.
 - Thứ tự nguồn: **hướng dẫn Moodle/giảng viên mới nhất → paper → quyết định đã ghi của nhóm → [repo tác giả](https://github.com/aestebant/mlhat) để kiểm chứng**. Báo lại nếu nguồn mâu thuẫn; đừng tự coi kế hoạch đề xuất là quyết định chính thức.
 
 ## Hai bài nộp Midterm
@@ -27,7 +27,7 @@ Final poster là giai đoạn sau. Không tuyên bố đã nộp, đã chạy ha
 
 ## Trước khi viết thí nghiệm
 
-- Kiểm chứng và hoàn thiện [docs/experiment-protocol.md](docs/experiment-protocol.md) theo phần Experiments của paper: claim, dataset, baseline, metric chính xác, config, seed/số lần chạy, output và hình/bảng cần đối chiếu. Nhóm đã chọn phạm vi **Core** với hai thí nghiệm chính và một phân tích bổ sung; nguồn dataset còn phải xác minh.
+- Kiểm chứng và hoàn thiện [docs/experiment-protocol.md](docs/experiment-protocol.md) theo phần Experiments của paper: claim, dataset, baseline, metric chính xác, config, seed/số lần chạy, output và hình/bảng cần đối chiếu. Nhóm chọn phạm vi **Core** với hai thí nghiệm chính và ablation bật/tắt drift.
 - Nếu paper yêu cầu online/prequential, dự đoán trước khi học từ mẫu đó. Kiểm tra schema, split, định nghĩa và thang metric trước khi so số liệu; chỉ tính relative deviation cho các giá trị so sánh được.
 - Khi công thức hoặc thứ tự cập nhật chưa rõ, nêu rõ mục/định nghĩa cần xác minh và đề xuất kiểm tra nhỏ; không tự sáng tạo chi tiết khoa học.
 

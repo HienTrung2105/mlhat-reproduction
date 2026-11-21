@@ -38,7 +38,7 @@ Kế hoạch 30 slide. Giới hạn 20–40 slide tính cả phụ lục và dư
 - **Slide 26** — EXP-01, bảng kết quả và diễn giải khác biệt.
 - **Slide 27** — EXP-02, cấu hình và mốc sudden/gradual.
 - **Slide 28** — EXP-02, đường cong F1 và sự kiện drift.
-- **Slide 29** — EXTRA-01, độ nhạy kappa_alt. A cung cấp số liệu và diễn giải.
+- **Slide 29** — Phân tích bổ sung từ EXP-02: so sánh bật/tắt drift theo stream và seed, quan sát sự kiện mở/bỏ cây dự phòng. Xem [bằng chứng ablation](exp2-results.md#phân-tích-bổ-sung--ablation-bậttắt-drift).
 - **Slide 30** — Kết luận theo câu hỏi nghiên cứu và giới hạn của phạm vi Core.
 
 ## Kiểm tra trước khi nộp

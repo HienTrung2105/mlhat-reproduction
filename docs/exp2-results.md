@@ -36,7 +36,9 @@ Phần chạy và bằng chứng public đã có. **Chưa xác thực phép so v
 
 MLHAT có F1 trung bình cao hơn BR+HAT trên hai stream nhưng không thắng mọi metric: subset accuracy gradual thấp hơn baseline. Chưa kiểm định ý nghĩa thống kê, không suy rộng thành ưu thế tổng quát.
 
-## Quan sát drift và phân tích sai lệch
+## Phân tích bổ sung — Ablation bật/tắt drift
+
+Phân tích bổ sung của Midterm dùng **sáu cặp run** trong batch EXP-02, ghép theo stream và seed. Mỗi cặp so MLHAT bật drift với MLHAT tắt drift. Tổng số run EXP-02 vẫn là 18.
 
 | Stream | Seed | Mở cây nền tại mẫu | Bỏ cây nền tại mẫu |
 | --- | --- | --- | --- |
@@ -50,6 +52,10 @@ MLHAT có F1 trung bình cao hơn BR+HAT trên hai stream nhưng không thắng 
 Cả sáu run MLHAT có đúng một lần mở rồi bỏ cây nền ở root; **không có promote**. Run tắt drift không có sự kiện; sự kiện nội bộ River của BR+HAT chưa instrument, nên không báo count 0 cho baseline.
 
 Bật drift đổi F1 trung bình khoảng −0.000246 (sudden) và +0.000405 (gradual) so với tắt drift. Chưa thấy lợi ích rõ từ thay cây trong cấu hình nhóm. Không quy F1 tăng sau mốc 25.000 cho promote, vì ablation cũng tăng và không run nào promote. Ảnh hưởng của dự đoán kết hợp, leaf và giả định detector còn cần kiểm chứng.
+
+Các run bật drift đều dùng `kappa_alt = 200`. Khảo sát `kappa_alt = 100, 200, 500` nằm ngoài phạm vi kết quả Midterm và được giữ làm hướng nghiên cứu tiếp theo.
+
+## Đối chiếu với tác giả
 
 [CSV tham chiếu của tác giả](https://github.com/aestebant/mlhat/blob/8578941fcae1f9d55e95d6bc41b771a171a9c48d/results/per_dataset/example_f1.csv) ghi MLHAT SynHPSud=0.3269752095776777 và SynHPGrad=0.2892550611489483. **Chưa xác minh cách tổng hợp đó tương đương F1 toàn stream của nhóm**; không tính relative deviation giữa các giá trị chưa so sánh được. Chênh cấu hình/thư viện hiện là giả thuyết giải thích, chưa là nguyên nhân đã chứng minh.
 
@@ -114,11 +120,8 @@ Runner từ chối ghi đè JSON đã có trước khi tải dữ liệu hoặc 
 
 ## Bàn giao slide và việc còn thiếu
 
-- Một báo cáo này giữ nội dung để C làm toàn bộ **slide 16–17 và 23–30**. Sau này đặt file slide thật ở `slides/member-c/`; chưa tạo thư mục rỗng hoặc slide trong lần dọn này.
-- Slide 16–17: cơ chế drift và các giả định ở [decisions.md](decisions.md). Slide 23–24: scope/protocol/data/config; 25–26 nhận kết quả EXP-01 đã kiểm chứng từ B; 27–28 dùng bảng/hình EXP-02; 29 nhận EXTRA-01 từ A; 30 kết luận có giới hạn.
+- Các slide về drift và thực nghiệm sử dụng [quyết định về cơ chế drift](decisions.md), [giao thức chung](experiment-protocol.md), [6 run EXP-01 trên Yeast](../README.md#exp-01--kết-quả-yeast) và bằng chứng EXP-02 trong báo cáo này. Phần phân tích bổ sung trình bày ablation và quan sát về cây dự phòng.
 - Hình gốc để trích dẫn vẫn ở `artifacts/exp2_hyperplane/*_f1.png`; bản xuất mới ở `artifacts/exp2_reports/`. Mỗi đường là trung bình ba seed; hai đường gần trùng có thể che nhau, cần kèm bảng. Mỗi hình/số trên deck có URL W&B cụ thể; hình do nhóm tạo, notes mỗi slide và trích dẫn IEEE tại slide.
 - **Cùng A/B xác minh evaluator và phép tổng hợp paper**, rồi mới so relative deviation; thực hiện phép chạy code tác giả độc lập theo yêu cầu môn, không sao chép core.
 - Rà warning ADWIN, lỗi cây nền, trọng số kết hợp và giải thích sai lệch bằng bằng chứng; chưa quy cho seed/version khi chưa kiểm tra. Kết quả 0 promote là quan sát phải báo trung thực.
-- Toàn nhóm hoàn thành EXP-01/EXTRA-01 và deck 10.pptx (20–40 slide, <20 MB, notes mọi slide). Phần đó chưa được audit lại trong lần dọn EXP-02.
-- Hướng dẫn môn viết “one public W&B project”; hiện EXP-02 là project riêng trong Team chung theo chỉ định. Nhóm cần đối chiếu cách tổ chức với giảng viên, không tự chuyển/ghi đè EXP-01.
-- Phần refactor/bàn giao mới cần review rồi commit/PR khi nhóm quyết định. Không tự merge main hoặc push trong lần dọn này.
+- EXP-01 và EXP-02 hiện có hai project công khai trong cùng Team. Nhóm cần đối chiếu cách tổ chức này với yêu cầu “one public W&B project” trong hướng dẫn môn.

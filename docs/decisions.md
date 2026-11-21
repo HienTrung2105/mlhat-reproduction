@@ -13,7 +13,7 @@ Chủ đề MLHAT đã được duyệt theo thông tin của nhóm. Mã nhóm l
 - **D-01 — Core Scope.** Tái tạo một phần hai phép so sánh của paper và thực hiện một phân tích bổ sung.
 - **D-02 — EXP-01.** MLHAT và BR+HAT trên Yeast, bám RQ2, đồng thời đối chiếu bối cảnh benchmark RQ1.
 - **D-03 — EXP-02.** MLHAT và BR+HAT trên SynHPSud và SynHPGrad, bám RQ3. Thêm biến thể MLHAT tắt drift để giải thích đóng góp của cơ chế này.
-- **D-04 — EXTRA-01.** Trên SynHPGrad, khảo sát kappa_alt với 100, 200 và 500. Giá trị 200 lấy từ Table 5 của paper v1.
+- **D-04 — Phân tích bổ sung của Midterm.** Nhóm chọn ablation bật/tắt drift từ EXP-02, ghép theo stream và seed. Mỗi cặp chạy cùng các thiết lập ngoài cơ chế drift. Kế hoạch cũ khảo sát `kappa_alt = 100, 200, 500` trên SynHPGrad được chuyển sang hướng nghiên cứu tiếp theo.
 - **D-05 — Đánh giá.** Test-then-train, giữ thứ tự stream nguồn. Metric chính là example-based F1. Báo thêm Hamming loss và subset accuracy. Seed của nhóm là 1, 2, 3, áp dụng cho ngẫu nhiên của mô hình.
 - **D-06 — Tích hợp.** Dùng giao diện trong [integration-contracts.md](integration-contracts.md). A sở hữu cấu trúc cây, B sở hữu lá và đánh giá, C sở hữu quyết định drift.
 - **D-07 — Bằng chứng.** Kết quả phải truy về script, cấu hình, revision dữ liệu và W&B run công khai. So sánh số liệu với paper khi cùng dataset và giao thức.

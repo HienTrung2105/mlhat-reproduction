@@ -1,10 +1,12 @@
 # Giao thức tái tạo — nhóm 10
 
-Phạm vi Core. Ba mục dưới đây là kế hoạch chạy. Bản thảo slide và README lấy số liệu từ run registry sau khi chạy.
+Giao thức của hai thí nghiệm chính và phân tích bổ sung trong phạm vi Core của Midterm.
 
 ## EXP-01 — So sánh trên dữ liệu thật
 
 B chủ trì, A kiểm tra cây và C đối chiếu baseline. Chạy MLHAT nhóm và BR+HAT trên **Yeast** (2.417 mẫu, 103 đặc trưng, 14 nhãn theo Table 3). BR+HAT dùng một Hoeffding Adaptive Tree của River cho mỗi nhãn. Cố định phiên bản River và ghi toàn bộ tham số của baseline. Tham chiếu §4.3–4.4, Tables 6–8 và Figure 5. Đây là so sánh hai mô hình hoàn chỉnh. Mức chênh không thể quy hết cho split vì cấu trúc và bộ dự đoán cũng khác nhau.
+
+Đã hoàn thành 6 run, gồm hai mô hình × ba seed. W&B ghi commit `344cf97`, giao thức `test_then_train` và 2.417 mẫu mỗi run. Bảng F1 và link từng seed nằm trong [README](../README.md#exp-01--kết-quả-yeast).
 
 ## EXP-02 — Drift đột ngột và gradual
 
@@ -14,9 +16,11 @@ Curve nhóm: cửa sổ 1.000 mẫu/điểm mỗi 250 mẫu; bổ sung fading al
 
 Đã hoàn tất 18 run và kiểm tra W&B Public. [Báo cáo EXP-02 chính](exp2-results.md) giữ toàn bộ nguồn HF/commit/checksum, config, kết quả mean ± SD, 18 URL, kiểm chứng public, lệnh tái lập/upload và giới hạn khoa học. Các file gốc và snapshot được bảo toàn; báo cáo dẫn xuất mới ghi ra `artifacts/exp2_reports/`, không ghi đè batch `artifacts/exp2_hyperplane/`.
 
-## EXTRA-01 — Độ nhạy với kappa_alt
+## Phân tích bổ sung — Ablation bật/tắt drift
 
-A chủ trì, C kiểm tra drift và B tổng hợp W&B. Chạy lại SynHPGrad với kappa_alt = 100, 200, 500 và giữ nguyên mọi tham số khác. Dùng lại run EXP-02 có cùng cấu hình tại 200. Báo F1 cả stream, F1 trong 2.000 mẫu sau từng mốc drift, số lần promote và thời gian xử lý. Mốc 200 là cấu hình tham chiếu đã chọn cho nhóm.
+So MLHAT bật drift và MLHAT tắt drift trên SynHPSud và SynHPGrad. Ghép theo stream và seed, giữ nguyên split, leaf, bootstrap và các tham số chung. Phân tích dùng 12 run có sẵn trong EXP-02, tức sáu cặp. Báo Example F1 toàn stream và quan sát sự kiện mở, thay, bỏ cây dự phòng. Xem [số liệu và diễn giải](exp2-results.md#phân-tích-bổ-sung--ablation-bậttắt-drift).
+
+Khảo sát độ nhạy với `kappa_alt = 100, 200, 500` là hướng nghiên cứu tiếp theo. Các run MLHAT bật drift trong EXP-02 dùng `kappa_alt = 200`.
 
 ## Chuẩn chung cho các lần chạy
 
@@ -35,6 +39,6 @@ Các giá trị dưới đây mô tả cách code hiện tại triển khai prot
 - Leaf dùng `n_neighbors=5` cho LP-kNN khi chưa đủ `eta=750` mẫu; khi đạt ngưỡng, dùng bagging Logistic Regression với `n_estimators=10` cho mỗi nhãn. Prediction threshold là `0.5`; trọng số online của cây dùng Poisson `lambda=1`.
 - Splitter chọn ngưỡng tốt nhất cho từng feature trước khi so hai feature tốt nhất, theo Eq. (9). Số bin bằng 10 là lựa chọn implementation của nhóm.
 - Evaluator hiện cộng dồn metric trên toàn bộ stream và trả example-F1, Hamming loss, subset accuracy, cùng micro-F1. Runner không tạo chuỗi metric theo từng mốc và không áp dụng fading/forgetting cho metric.
-- Trên nhánh C, code đã tích hợp detector và nhánh nền; các giả định chưa chốt được ghi trong [decisions.md](decisions.md). Chưa có run EXP-01 được xác thực lại với code này, nên không dùng số cũ của biến thể chỉ có cây chính để báo cáo MLHAT hoàn chỉnh.
+- Sáu run EXP-01 được báo cáo lấy từ project `mlhat-team10-exp1-drift`. Ba run MLHAT ghi cấu hình bật drift. Các giả định của detector và nhánh nền được ghi trong [decisions.md](decisions.md).
 
 Nguồn phương pháp và đối chiếu. [Paper v1](https://arxiv.org/html/2410.20242v1).

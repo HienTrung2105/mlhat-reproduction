@@ -6,7 +6,7 @@ Nhóm 10 đang tự triển khai phương pháp **Multi-Label Hoeffding Adaptive
 
 Repo đã có cây chính và phép chia trên đặc trưng số, bộ dự đoán nhiều nhãn tại lá, cơ chế phát hiện drift và cây con dự phòng, bộ tải Yeast, baseline BR+HAT và vòng đánh giá test-then-train. Phần drift đã qua kiểm thử trên các tình huống nhỏ nhưng còn những [giả định cần nhóm rà lại](docs/decisions.md) trước khi dùng để kết luận về MLHAT.
 
-**EXP-02: đủ 18 run thật (hai stream × ba mô hình × ba seed), đã upload W&B Public.** Xem [báo cáo chính](docs/exp2-results.md) cho protocol, số liệu, audit public, cách chạy và việc còn thiếu. Còn xác minh evaluator/code gốc và phân tích sai lệch trước khi kết luận tái tạo thành công. Dữ liệu HF được ghim revision/checksum trong `data/manifests/`. `smoke_baseline` là demo SGD synthetic, không phải EXP-02.
+Nhóm đã hoàn thành **6 run EXP-01 trên Yeast** và **18 run EXP-02 trên hai stream Hyperplane**, đều có W&B công khai. Phân tích bổ sung của Midterm dùng các run bật/tắt drift đã có trong EXP-02. Phép đối chiếu với tác giả vẫn cần xác minh giao thức đánh giá. Dữ liệu Hugging Face được ghim revision và checksum trong cấu hình hoặc manifest.
 
 ## Cài đặt và kiểm thử
 
@@ -37,11 +37,13 @@ Chi tiết về giao diện A/B/C nằm trong [integration-contracts.md](docs/in
 
 | Mục | So sánh hoặc phân tích | Tình trạng |
 | --- | --- | --- |
-| EXP-01 | MLHAT và BR+HAT trên Yeast | Có loader, config và runner; chưa có run báo cáo |
-| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | Đủ 18 run Finished; config/metric/hình đã kiểm tra public; còn đối chiếu mã gốc |
-| EXTRA-01 | Độ nhạy theo `kappa_alt = 100, 200, 500` trên SynHPGrad | Chưa chạy |
+| EXP-01 | MLHAT và BR+HAT trên Yeast | [6 run công khai](#exp-01--kết-quả-yeast), mỗi run 2.417 mẫu |
+| EXP-02 | MLHAT, BR+HAT và MLHAT tắt drift trên SynHPSud, SynHPGrad | [18 run công khai](docs/exp2-results.md), mỗi run 50.000 mẫu |
+| Phân tích bổ sung | Ablation bật/tắt drift, ghép theo stream và seed | Dùng 12 trong 18 run EXP-02, gồm 6 run bật và 6 run tắt |
 
-Nhóm dùng thứ tự stream gốc và predict → metric → learn. Metric tổng kết là trung bình cả stream; curve EXP-02 có rolling và fading riêng, chưa xác minh cùng phép tổng hợp với paper. Tham số và giới hạn nằm trong [protocol chung](docs/experiment-protocol.md), [báo cáo EXP-02](docs/exp2-results.md) và [quyết định cần review](docs/decisions.md).
+Khảo sát độ nhạy `kappa_alt = 100, 200, 500` được giữ làm hướng nghiên cứu tiếp theo, ngoài phạm vi kết quả Midterm.
+
+Nhóm dùng thứ tự stream gốc và predict → metric → learn. Metric tổng kết là trung bình cả stream. EXP-02 có đường rolling và fading riêng, chưa xác minh phép tổng hợp tương đương paper. Tham số và giới hạn nằm trong [giao thức chung](docs/experiment-protocol.md), [báo cáo EXP-02](docs/exp2-results.md) và [quyết định của nhóm](docs/decisions.md).
 
 Kiểm tra/xuất báo cáo từ **batch đã có**, không train hoặc upload:
 
@@ -77,6 +79,15 @@ Mỗi phần việc nên ở một nhánh để thành viên khác review trư�
 Code MLHAT của nhóm dựa trên mô tả và công thức trong [paper](https://arxiv.org/html/2410.20242v1). [Repo tác giả](https://github.com/aestebant/mlhat) chỉ dùng để kiểm chứng và đối chiếu độc lập; nhóm không sao chép code lõi.
 
 Repo dùng NumPy và scikit-learn cho hạ tầng; River 0.26.1 cung cấp ADWIN, các bộ học ở lá và baseline BR+HAT. Hugging Face datasets dùng để tải dữ liệu bằng code, còn W&B dùng để lưu bằng chứng run khi thí nghiệm được thực hiện.
+
+## EXP-01 — Kết quả Yeast
+
+Nhóm chạy MLHAT và BR+HAT trên cùng 2.417 mẫu Yeast theo thứ tự nguồn. Sáu run `Finished` ghi commit [`344cf97`](https://github.com/HienTrung2105/mlhat-reproduction/commit/344cf9733882530d43ad0bebf30b9f3ac743fa8d). Các tham số, revision và checksum trong W&B khớp cấu hình tại commit đó. Xem [script](experiments/reproduce_exp1.py), [cấu hình](configs/exp1_yeast.json) và [project W&B công khai](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift).
+
+| Model | Seed 1 | Seed 2 | Seed 3 | Example F1 (mean ± SD mẫu) |
+| --- | --- | --- | --- | --- |
+| MLHAT | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift/runs/d2gaujzt) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift/runs/ngdas8ng) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift/runs/fgvhzyga) | 0.493146 ± 0.003487 |
+| BR+HAT | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift/runs/1xcadmvz) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift/runs/4me7j1ep) | [run](https://forge.coreweave.com/wandb/ml-group10-24khmt1-2026/mlhat-team10-exp1-drift/runs/2zfdhtoq) | 0.576288 ± 0.012768 |
 
 ## EXP-02: script/config → W&B runs
 

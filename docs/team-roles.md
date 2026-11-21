@@ -9,7 +9,7 @@
 - [ ] Triển khai `src/mlhat/tree.py`, `src/mlhat/splitting.py`, viết unit tests minh bạch.
 - [ ] Cùng C kiểm thử việc kết nối split/tree/drift; cùng B xác minh leaf interface.
 - [ ] Làm slides **7–13 và 18–20**, hình tự vẽ, đầy đủ notes và IEEE citations.
-- [ ] Chủ trì EXTRA-01 trên SynHPGrad, bàn giao bảng độ nhạy và phần diễn giải cho slide 29.
+- [ ] Rà với C cách diễn giải ablation bật/tắt drift và các giới hạn của kết quả.
 
 **Bàn giao:** sơ đồ thuật toán gốc nhóm, tài liệu công thức, source + tests, 10 slide editable/notes.
 
